@@ -1,7 +1,7 @@
-import React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect } from "react";
+import { useState } from "react";
 import { IoMdSettings } from "react-icons/io";
-import { PiRecordFill, PiPauseFill, PiStopFill } from "react-icons/pi";
+import { PiRecordFill, PiStopFill } from "react-icons/pi";
 import {
   LineChart,
   Line,
@@ -14,74 +14,66 @@ import {
 import NavbarButton from "../components/NavbarButton";
 import TempDisplay from "../components/TempDisplay";
 const { ipcRenderer } = require("electron");
-
+const Store = require("electron-store");
+const store = new Store();
 
 const Main = () => {
+  const [data, setData] = useState([]);
+  const [judul, setJudul] = useState(store.get("config.judul") || "");
+  const [subjudul, setSubjudul] = useState(store.get("config.subjudul") || "");
+  const [currentTemp, setCurrentTemp] = useState({
+    t1: 0.0,
+    t2: 0.0,
+    t3: 0.0,
+    t4: 0.0,
+  });
   const [isRecording, setRecording] = useState(false);
-  const [isPaused, setPaused] = useState(true);
   const [isStopRecording, setStopRecording] = useState(true);
-  const [T1Temp, seT1Temp] = useState(0.0);
-  const [T2Temp, seT2Temp] = useState(0.0);
-  const [T3Temp, seT3Temp] = useState(0.0);
-  const [T4Temp, seT4Temp] = useState(0.0);
-  const [data, setData] = useState([{}]);
-  const [intervalId2, setIntervalId2] = useState(null);
-  const [port2, setPort2] = useState(null);
-  const firstUpdate = useRef(true);
 
-  const startRecording = () => {
-    setRecording(true);
-    setPaused(false);
-    setStopRecording(false);
+  const handleStartRecording = () => {
+    if (data.length == 0) {
+      ipcRenderer.send("mainWindow", "open");
+    }
   };
 
-  const pauseRecording = () => {
+  const handleStopRecording = () => {
     setRecording(false);
-    setPaused(true);
-    setStopRecording(false);
   };
 
-  const stopRecording = () => {
-    setRecording(false);
-    setPaused(true);
-    setStopRecording(true);
-    // saveFile();
-    handleDivDownload();
+  const handleSettingWindow = () => {
+    ipcRenderer.send("settingWindow", "open");
   };
 
-  const handleNewWindow = () => {
-    // const win = new BrowserWindow({
-    //   height: 600,
-    //   width: 800,
-    // });
-    // win.loadURL(`https://www.electronjs.org/docs/api/remote`);
-    ipcRenderer.send('openSettingWindow', 'main.html')
-  };
+  // Set up IPC listener when component mounts
+  useEffect(() => {
+    ipcRenderer.on("mainWindow", (event, data) => {
+      if (data == "update-config") {
+        setJudul(store.get("config.judul") || "");
+        setSubjudul(store.get("config.subjudul") || "");  
+      }
+
+      if (data == "record-confirm") setRecording(true);
+    });
+
+    return () => ipcRenderer.removeListener("mainWindow", ipcListener);
+  }, []);
+
   return (
     <div className="h-screen flex flex-col">
       <div className="bg-gray-100 border-b border-gray-400 flex px-2 py-1">
-        <NavbarButton onClick={startRecording} disabled={!port2 || isRecording}>
+        <NavbarButton onClick={handleStartRecording} disabled={isRecording}>
           <PiRecordFill
             className={`${
-              !isRecording && port2 ? "text-red-500" : "text-gray-300"
+              !isRecording ? "text-red-500" : "text-gray-300"
             } text-4xl`}
           />
           <div className="text-sm">Rekam</div>
         </NavbarButton>
 
-        {/* <NavbarButton onClick={pauseRecording} disabled={isPaused}>
-          <PiPauseFill
-            className={`${
-              !isPaused ? 'text-cyan-700' : 'text-gray-300'
-            } text-4xl`}
-          />
-          <div className="text-sm">Jeda</div>
-        </NavbarButton> */}
-
-        <NavbarButton onClick={stopRecording} disabled={isStopRecording}>
+        <NavbarButton onClick={handleStopRecording} disabled={!isRecording}>
           <PiStopFill
             className={`${
-              !isStopRecording ? "text-cyan-700" : "text-gray-300"
+              isRecording ? "text-cyan-700" : "text-gray-300"
             } text-4xl`}
           />
           <div className="text-sm">Berhenti</div>
@@ -91,7 +83,7 @@ const Main = () => {
 
         <NavbarButton
           onClick={() => {
-            handleNewWindow();
+            handleSettingWindow();
           }}
         >
           <IoMdSettings className="text-gray-500 text-4xl" />
@@ -103,7 +95,7 @@ const Main = () => {
           <TempDisplay
             name="T1"
             color="bg-red-600"
-            currentTemp={T1Temp}
+            currentTemp={currentTemp.t1}
             minTemp="--.-"
             avgTemp="--.-"
             maxTemp="--.-"
@@ -111,7 +103,7 @@ const Main = () => {
           <TempDisplay
             name="T2"
             color="bg-yellow-600"
-            currentTemp={T2Temp}
+            currentTemp={currentTemp.t2}
             minTemp="--.-"
             avgTemp="--.-"
             maxTemp="--.-"
@@ -119,7 +111,7 @@ const Main = () => {
           <TempDisplay
             name="T3"
             color="bg-green-600"
-            currentTemp={T3Temp}
+            currentTemp={currentTemp.t3}
             minTemp="--.-"
             avgTemp="--.-"
             maxTemp="--.-"
@@ -127,15 +119,17 @@ const Main = () => {
           <TempDisplay
             name="T4"
             color="bg-blue-600"
-            currentTemp={T4Temp}
+            currentTemp={currentTemp.t4}
             minTemp="--.-"
             avgTemp="--.-"
             maxTemp="--.-"
           />
         </div>
         <div className="w-full items-center flex flex-col">
-          <div className="text-xl text-center">PT SUMBER REZEKI PALLETINDO</div>
-          <div className="text-xl text-center">DRY KLIN</div>
+          <div className="text-xl text-center">{judul}</div>
+          <div className="text-lg text-center whitespace-pre-line line-clamp-4">
+            {subjudul}
+          </div>
           <div className="flex-grow w-full">
             <ResponsiveContainer height="100%" width="100%">
               <LineChart
