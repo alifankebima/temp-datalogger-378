@@ -33,7 +33,7 @@ const calculateMaxTemp = (input) => {
     return Math.max(maxTemp, input);
 }
 
-module.exports = {
+export default {
     parseTemp,
     calculateMinTemp,
     calculateAvgTemp,

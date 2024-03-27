@@ -16,6 +16,7 @@ import TempDisplay from "../components/TempDisplay";
 const { ipcRenderer } = require("electron");
 
 
+
 const Home = () => {
   const [isRecording, setRecording] = useState(false);
   const [isPaused, setPaused] = useState(true);
@@ -57,6 +58,11 @@ const Home = () => {
     // win.loadURL(`https://www.electronjs.org/docs/api/remote`);
     ipcRenderer.send('newWindow', 'main.html')
   };
+
+  // useEffect(() => {
+
+  // }, [])
+
   return (
     <div className="h-screen flex flex-col">
       <div className="bg-gray-100 border-b border-gray-400 flex px-2 py-1">

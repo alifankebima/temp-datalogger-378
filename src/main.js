@@ -2,11 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 let settingWindow, mainWindow;
 const Store = require('electron-store');
-
-// const low = require('lowdb');
-// const FileSync = require('lowdb/adapters/FileSync');
-// const adapter = new FileSync('db.json'); // FileSync adapter, change to appropriate adapter if needed
-// const db = low(adapter);
+import tempData from './model/tempdata.js';
+import serialport from './config/serialport.js';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -40,6 +37,8 @@ const createWindow = () => {
 
   // Initialize electron-store for renderer process
   Store.initRenderer();
+
+  serialport().then((data) => console.log(data))
 };
 
 // This method will be called when Electron has finished
@@ -66,7 +65,14 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
-ipcMain.on('settingWindow', function (e, args) {
+ipcMain.handle("database", async (e, args) => {
+  if (args.command === "fetch-all") return await tempData.fetchAllData()
+  if (args.command === "insert") return await tempData.insertData(args)
+  if (args.command === "soft-delete") return await tempData.softDeleteAllData(args)
+  if (args.command === "hard-delete") return await tempData.hardDeleteAllData()
+})
+
+ipcMain.on('settingWindow', (e, args) => {
   if (settingWindow && args == 'close') {
     settingWindow.close()
     return;
@@ -102,13 +108,13 @@ ipcMain.on('settingWindow', function (e, args) {
     })
   }
 
-  settingWindow.on('closed', function () { //set new window to null when we're done
+  settingWindow.on('closed', () => { //set new window to null when we're done
     mainWindow.webContents.send('mainWindow', 'update-config')
     settingWindow = null
   })
 });
 
-ipcMain.on('mainWindow', function (e, args) {
+ipcMain.on('mainWindow', (e, args) => {
   dialog.showMessageBox(mainWindow, {
     'type': 'question',
     'title': 'Confirmation',
@@ -118,10 +124,10 @@ ipcMain.on('mainWindow', function (e, args) {
       'No'
     ]
   }).then((result) => {
-    if (result.response !== 0) return 
+    if (result.response !== 0) return
 
     if (result.response === 0) {
       mainWindow.webContents.send('mainWindow', 'record-confirm')
     }
-})
+  })
 })
