@@ -13,29 +13,29 @@ const parseTemp = (firstByte, secondByte) => {
         , 16) / 10;
 }
 
-let lowTemp;
-const calculateMinTemp = (input) => {
+const calculateMinTemp = (lowTemp, input) => {
     if (!lowTemp) lowTemp = input;
     return Math.min(lowTemp, input)
 }
 
-let avgTemp = [];
-const calculateAvgTemp = (input) => {
+const calculateAvgTemp = (avgTemp, input) => {
     avgTemp.push(input);
     if(avgTemp.length > 10) avgTemp.shift();
     const sum = avgTemp.reduce((acc, val) => acc + val, 0);
     return sum / avgTemp.length;
 }
 
-let maxTemp;
-const calculateMaxTemp = (input) => {
+const calculateMaxTemp = (maxTemp, input) => {
     if (!maxTemp) maxTemp = input;
     return Math.max(maxTemp, input);
 }
+
+const handleError = (error) => error && console.error(error.message || error);
 
 export default {
     parseTemp,
     calculateMinTemp,
     calculateAvgTemp,
-    calculateMaxTemp
+    calculateMaxTemp,
+    handleError
 }

@@ -5,7 +5,7 @@ const sqlite = require('sqlite-electron');
         const dbCreated = await sqlite.setdbPath("file:datalogger.db?mode:rwc", true);
         console.log('DB file created!');
 
-        if (dbCreated){
+        if (dbCreated) {
             await sqlite.executeQuery(`CREATE TABLE IF NOT EXISTS tempdata(
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 title TEXT,
@@ -18,9 +18,8 @@ const sqlite = require('sqlite-electron');
                 deleted_at INTEGER
             );`)
             console.log('Table created!');
-        } 
-    }
-    catch (err) {
+        }
+    } catch (err) {
         console.log(err);
     }
 })()

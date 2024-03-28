@@ -22,40 +22,49 @@ const Main = () => {
   const [judul, setJudul] = useState(store.get("config.judul") || "");
   const [subjudul, setSubjudul] = useState(store.get("config.subjudul") || "");
   const [currentTemp, setCurrentTemp] = useState({
-    t1: 0.0,
-    t2: 0.0,
-    t3: 0.0,
-    t4: 0.0,
+    t1: null,
+    t2: null,
+    t3: null,
+    t4: null,
   });
   const [isRecording, setRecording] = useState(false);
-  const [isStopRecording, setStopRecording] = useState(true);
 
-  const handleStartRecording = () => {
-    if (data.length == 0) {
-      ipcRenderer.send("mainWindow", "open");
-    }
-  };
-
-  const handleStopRecording = () => {
-    setRecording(false);
-  };
-
-  const handleSettingWindow = () => {
-    ipcRenderer.send("settingWindow", "open");
-  };
+  const handleStartRecording = () =>
+    !data && ipcRenderer.send("main-process", "open");
+  const handleStopRecording = () => setRecording(false);
+  const handleSettingWindow = () => ipcRenderer.send("setting-window", "open");
 
   // Set up IPC listener when component mounts
   useEffect(() => {
-    ipcRenderer.on("mainWindow", (event, data) => {
-      if (data == "update-config") {
+    ipcRenderer.on("main-window", (event, data) => {
+      if (data.command === "update-config") {
         setJudul(store.get("config.judul") || "");
-        setSubjudul(store.get("config.subjudul") || "");  
+        setSubjudul(store.get("config.subjudul") || "");
       }
 
-      if (data == "record-confirm") setRecording(true);
+      if (data.command === "record-confirm") setRecording(true);
+
+      if (data.command === "update-temp-graph") {
+        setCurrentTemp({
+          t1: data.t1,
+          t2: data.t2,
+          t3: data.t3,
+          t4: data.t4,
+        });
+        setData((prev) => [
+          ...prev,
+          {
+            t1: data.t1,
+            t2: data.t2,
+            t3: data.t3,
+            t4: data.t4,
+            timestamp: data.created_at,
+          },
+        ]);
+      }
     });
 
-    return () => ipcRenderer.removeListener("mainWindow", ipcListener);
+    return () => ipcRenderer.removeListener("main-window", ipcListener);
   }, []);
 
   return (
@@ -142,7 +151,7 @@ const Main = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+                <XAxis dataKey="timestamp" />
                 <YAxis type="number" domain={[20, 80]} />
                 <Line
                   connectNulls

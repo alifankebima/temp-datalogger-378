@@ -1,49 +1,23 @@
 const { SerialPort } = require('serialport');
 
-const serialDevice = async () => {
-  let port;
+const serialport = async () => {
+  try {
+    const ports = await SerialPort.list()
+    const targetDevice = ports.find(port => port.manufacturer.includes('Silicon Laboratories'))
+    if (!targetDevice) return console.log("Target device not found, devices list : \n",
+      ports.map(port => port.friendlyName).join(", "))
 
-  const findDevice = async () => {
-    try {
-      const ports = await SerialPort.list()
-      const targetDevice = ports.find(port => port.manufacturer.includes('Silicon Laboratories'))
-      if (targetDevice) {
-        return targetDevice.path
-      } else {
-        console.log("Target device not found, devices : ")
-        console.log(ports.map(port => port.friendlyName).join(", "))
-        return null
-      }
-    } catch (error) {
-      console.error("Error searching Center 378 Device : ", error)
-    }
-  }
-
-  const connectToDevice = async () => {
-    const devicePath = await findDevice()
-    if (!devicePath) return setTimeout(connectToDevice, 1500)
-
-    port = new SerialPort({
-      path: devicePath,
+    const port = new SerialPort({
+      path: targetDevice.path,
       baudRate: 9600
-    }, (error) => { if (error) return console.log("Error : ", error.message) });
-
-    port.on('open', () => {
-      console.log("Serial port opened")
+    }, (error) => {
+      if(error) throw new Error(error)
     });
 
-    port.on('error', error => {
-      console.error('Error:', error.message);
-    });
-
-    port.on('close', () => {
-      console.log('Port closed.')
-      setTimeout(connectToDevice, 1500);
-    });
+      return port;
+  } catch (error) {
+    console.error("Error connecting to target device : ", error)
   }
-
-  connectToDevice()
-  return port
 }
 
-export default serialDevice;
+export default serialport;
