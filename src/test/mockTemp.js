@@ -309,7 +309,7 @@ const floatToBytes = (num) => {
 
 const mockTemp = (index) => {
     if(index + 1 > tempList.length) return null
-    return floatToBytes(tempList[index])
+    return floatToBytes(tempList[index % tempList.length])
 }
 
 export default mockTemp

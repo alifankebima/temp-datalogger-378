@@ -31,8 +31,6 @@ import ReactDOM from 'react-dom/client';
 import Main from './window/Main.jsx'
 import './index.css';
 
-console.log('👋 This message is being logged by "renderer.js", included via Vite');
-
 ReactDOM.createRoot(document.getElementById('root')).render(
   <Main />
 )

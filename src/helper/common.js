@@ -18,11 +18,15 @@ const calculateMinTemp = (lowTemp, input) => {
     return Math.min(lowTemp, input)
 }
 
-const calculateAvgTemp = (avgTemp, input) => {
+const handleAvgTempArray = (avgTemp, input) => {
     avgTemp.push(input);
-    if (avgTemp.length > 10) avgTemp.shift();
-    const sum = avgTemp.reduce((acc, val) => acc + val, 0);
-    return sum / avgTemp.length;
+    if (avgTemp.length > 20) avgTemp.shift();
+    return avgTemp
+}
+
+const calculateAvgTemp = (avgTempArray) => {
+    const sum = avgTempArray.reduce((acc, val) => acc + val, 0);
+    return sum / avgTempArray.length;
 }
 
 const calculateMaxTemp = (maxTemp, input) => {
@@ -30,20 +34,25 @@ const calculateMaxTemp = (maxTemp, input) => {
     return Math.max(maxTemp, input);
 }
 
-const formattedDate = (date) => new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-}).format(new Date(date))
+const formattedDate = (timestamp) => {
+    const date = new Date(timestamp)
+    const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu']
+    return hari[date.getDay()] + " " + new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    }).format(date)
+}
 
 const handleError = (error) => error && console.error(error.message || error);
 
 export default {
     parseTemp,
     calculateMinTemp,
+    handleAvgTempArray,
     calculateAvgTemp,
     calculateMaxTemp,
     handleError,

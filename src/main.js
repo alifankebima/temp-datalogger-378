@@ -3,15 +3,15 @@ const path = require('path');
 
 import store from './config/electronStore.js'
 import tempData from './model/tempdata.js';
-import serialPort from './config/serialport.js';
+// import serialPort from './config/serialport.js';
+import serialPort from './config/serialmock.js';
 import commonHelper from './helper/common.js';
 import serialCommand from './helper/serialCommand.js';
 import { ByteLengthParser } from 'serialport';
 import mockTemp from './test/mockTemp.js';
 import menu from './menu.js';
 
-let settingWindow, mainWindow, port, writeIntervalId;
-let count = 0;
+let settingWindow, mainWindow, port, writeIntervalId, isStopRecordManually, count = 0
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -53,15 +53,13 @@ const createWindow = () => {
     // Retry device search if model number is incorrect
     const test = () => {
       const intvId = setInterval(() => {
-        if (count > 300) clearInterval(intvId)
         count++
         port.port.emitData(Buffer.from('000000' + mockTemp(count).join('').repeat(4) + '000000000000000000000000000000000000000000000000', 'hex'))
-  
       }, 2000)
-
     }
 
     port.on('open', () => {
+      test()
       console.log("Device connected")
       serialCommand.data.sendOnce(port)
       writeIntervalId = setInterval(() => {
@@ -106,7 +104,8 @@ app.on('ready', createWindow);
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
+  if (isStopRecordManually) await tempData.softDeleteAllData()
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -123,18 +122,19 @@ app.on('activate', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 ipcMain.handle("database", async (event, data) => {
-  if (data.command === "fetch-all") return await tempData.fetchAllData()
+  if (data.command === "fetch-downsampled") return await tempData.fetchDownsampledData()
+  if (data.command === "fetch-downsampled-timestamp") return await tempData.fetchDownsampledTimestamp()
   if (data.command === "insert") return await tempData.insertData(data)
-  if (data.command === "soft-delete") return await tempData.softDeleteAllData(data)
+  if (data.command === "soft-delete") return await tempData.softDeleteAllData()
   if (data.command === "hard-delete") return await tempData.hardDeleteAllData()
 })
 
 // handle opening and closing setting window
 ipcMain.on('setting-window', (event, data) => {
-  if (settingWindow && data == 'close') return settingWindow.close()
+  if (settingWindow && data.command == 'close') return settingWindow.close()
   if (settingWindow) return settingWindow.focus()
 
-  if (data === 'open') {
+  if (data.command == 'open') {
     settingWindow = new BrowserWindow({
       width: 640,
       height: 480,
@@ -166,21 +166,30 @@ ipcMain.on('setting-window', (event, data) => {
   })
 });
 
-ipcMain.on('main-process', (event, data) => {
+ipcMain.on('main-window', (event, data) => {
+  if (data.command == 'start-record' && isDataExists) {
+    dialog.showMessageBox(mainWindow, {
+      'type': 'question',
+      'title': 'Confirmation',
+      'message': "Apakah Anda yakin ingin memulai rekaman? Data lama akan terhapus",
+      'buttons': [
+        'Ya',
+        'Tidak'
+      ]
+    }).then((result) => {
+      if (result.response !== 0) return
 
-  dialog.showMessageBox(mainWindow, {
-    'type': 'question',
-    'title': 'Confirmation',
-    'message': "Apakah Anda yakin ingin memulai rekaman? Data lama akan terhapus",
-    'buttons': [
-      'Yes',
-      'No'
-    ]
-  }).then((result) => {
-    if (result.response !== 0) return
+      if (result.response === 0) {
+        mainWindow.webContents.send('mainWindow', 'record-confirm')
+      }
+    })
+  } else if (data.command == 'start-record' && !isDataExists) {
+    mainWindow.webContents.send('mainWindow', 'record-confirm')
+  }
 
-    if (result.response === 0) {
-      mainWindow.webContents.send('mainWindow', 'record-confirm')
-    }
-  })
+  // Flagging if user stopped recording manually
+  // Indicates recording process is successful
+  if (data.command == 'stop-record' && data.isStopRecordManually) {
+    isStopRecordManually = data.isStopRecordManually
+  }
 })

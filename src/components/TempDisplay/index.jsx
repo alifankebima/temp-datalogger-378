@@ -9,23 +9,23 @@ const tempLimit = (input) => {
 };
 
 const TempDisplay = (props) => {
-  const { name, color, currentTemp, minTemp, avgTemp, maxTemp } = props;
+  const { name, color, currentTemp, minTemp, avgTemp, maxTemp, isDisabled } = props;
 
   return (
-    <div className="bg-gray-50 flex grow flex-col items-center justify-center border-b border-r border-gray-400 p-2 w-56">
+    <div className="bg-gray-50 flex grow flex-col justify-center border-b border-r border-gray-400 p-2 w-56">
       <div className="flex items-center w-full">
         <div>
-          <div className="text-xl w-10 font-bold">{name || "T1"}</div>
+          <div className={`${isDisabled ? "text-xl w-10 font-bold text-gray-500" : "text-xl w-10 font-bold"}`}>{name || "T"}</div>
           <div className={`${color || "bg-gray-800"} h-0.5 w-full my-2`} />
         </div>
-        <div className="text-4xl text-center mx-auto">
-          {tempLimit(currentTemp)}&#176;C
+        <div className={`${isDisabled ? "text-4xl text-center mx-auto text-gray-500" : "text-4xl text-center mx-auto"}`}>
+          {tempLimit(isDisabled ? null : currentTemp)}&#176;C
         </div>
       </div>
-      <div className="flex gap-2 pt-2 text-xs text-gray-500">
-        <div>MIN : {tempLimit(minTemp)}&#176;C</div>
-        <div>AVG : {tempLimit(avgTemp)}&#176;C</div>
-        <div>MAX : {tempLimit(maxTemp)}&#176;C</div>
+      <div className="flex justify-between pt-2 me-6 text-xs text-gray-500">
+        <div>MIN:<br /> {tempLimit(isDisabled ? null : minTemp)}&#176;C</div>
+        <div>AVG:<br /> {tempLimit(isDisabled ? null : avgTemp)}&#176;C</div>
+        <div>MAX:<br /> {tempLimit(isDisabled ? null : maxTemp)}&#176;C</div>
       </div>
     </div>
   );
