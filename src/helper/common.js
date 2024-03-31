@@ -37,6 +37,7 @@ const calculateMaxTemp = (maxTemp, input) => {
 const formattedDate = (timestamp) => {
     const date = new Date(timestamp)
     const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu']
+    // return hari[date.getDay()] + " " + date.toLocaleString()
     return hari[date.getDay()] + " " + new Intl.DateTimeFormat('en-GB', {
         day: '2-digit',
         month: '2-digit',

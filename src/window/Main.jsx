@@ -53,16 +53,17 @@ const Main = () => {
   });
 
   // Navigation bar states
-  const [isRecording, setRecording] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
 
   // User event handlers
   const handleStartRecording = () => {
     ipcRenderer.send("main-window", {
       command: "start-record",
-      isTemporaryDataExists: !!data.length,
+      isDataExists: !!data.length,
     });
   };
   const handleStopRecording = () => {
+    setIsRecording(false)
     ipcRenderer.send("main-window", {
       command: "stop-record",
       isStopRecordManually: true,
@@ -80,27 +81,19 @@ const Main = () => {
         setSubtitle(store.get("config.subtitle"));
       }
 
-      if (data.command === "start-record-confirmed") setRecording(true);
+      if (data.command == "record-confirm") {
+        setData([])
+        setIsRecording(true);
+        console.log("true")
+      }
 
-      if (data.command === "update-temp-graph") {
+      if (data.command === "update-temp-display") {
         setCurrentTemp({
           t1: data.t1,
           t2: data.t2,
           t3: data.t3,
           t4: data.t4,
         });
-        if (isRecording) {
-          setData((prev) => [
-            ...prev,
-            {
-              t1: data.t1,
-              t2: data.t2,
-              t3: data.t3,
-              t4: data.t4,
-              timestamp: data.created_at,
-            },
-          ]);
-        }
         setMinTemp((prev) => ({
           t1: commonHelper.calculateMinTemp(prev.t1, data.t1),
           t2: commonHelper.calculateMinTemp(prev.t2, data.t2),
@@ -120,16 +113,20 @@ const Main = () => {
           t4: commonHelper.calculateMaxTemp(prev.t4, data.t4),
         }));
       }
+
+      if (data.command == "update-temp-graph") {
+        console.log("data received")
+        setData(data.result);
+      }
     });
 
     // Load previous record data, in case of app crash
     (async () => {
-      const result = await ipcRenderer.invoke("database", {
+      const fetchDownsampledData = await ipcRenderer.invoke("database", {
         command: "fetch-downsampled",
       });
-      // const result2 = await ipcRenderer.invoke('database', {command: 'fetch-downsampled-timestamp'})
-      setData(result);
-      // setTimestamp(result2)
+
+      if (fetchDownsampledData.length) setData(fetchDownsampledData);
     })();
 
     return () => {
@@ -226,9 +223,7 @@ const Main = () => {
                   dataKey="timestamp"
                   height={20}
                   interval={"preserveStartEnd"}
-                  tick={(props) =>
-                    dateTimeAxisTick({ ...props })
-                  }
+                  tick={(props) => dateTimeAxisTick({ ...props })}
                   minTickGap={50}
                 />
                 <XAxis
@@ -244,13 +239,16 @@ const Main = () => {
                   tickLine={false}
                   label={{
                     value: "Waktu",
-                    position: "InsideBottom"
+                    position: "InsideBottom",
                   }}
                 />
                 <YAxis
                   type="number"
-                  label={{ value: 'Suhu (°C)', angle: -90, position: 'insideLeft' }}
-                  
+                  label={{
+                    value: "Suhu (°C)",
+                    angle: -90,
+                    position: "insideLeft",
+                  }}
                   domain={[
                     store.get("config.minGraphTemp"),
                     store.get("config.maxGraphTemp"),
@@ -284,7 +282,11 @@ const Main = () => {
                   stroke="#2563eb"
                   dot={false}
                 />
-                <Tooltip labelFormatter={(timestamp) => commonHelper.formattedDate(timestamp)}/>
+                <Tooltip
+                  labelFormatter={(timestamp) =>
+                    commonHelper.formattedDate(timestamp)
+                  }
+                />
                 <Legend formatter={legendGraph} />
               </LineChart>
             </ResponsiveContainer>

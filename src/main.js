@@ -11,7 +11,7 @@ import { ByteLengthParser } from 'serialport';
 import mockTemp from './test/mockTemp.js';
 import menu from './menu.js';
 
-let settingWindow, mainWindow, port, writeIntervalId, isStopRecordManually, count = 0
+let settingWindow, mainWindow, port, writeIntervalId, isStopRecordManually, count = 0, isRecording = false
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -74,22 +74,33 @@ const createWindow = () => {
     })
 
     parser.on('data', async (byte) => {
-      console.log(byte)
       const t1 = commonHelper.parseTemp(byte[3], byte[4])
       const t2 = commonHelper.parseTemp(byte[5], byte[6])
       const t3 = commonHelper.parseTemp(byte[7], byte[8])
       const t4 = commonHelper.parseTemp(byte[9], byte[10])
       const title = store.get('config.title')
       const subtitle = store.get('config.subtitle')
-      const created_at = new Date().getTime()
 
-      const data = { t1, t2, t3, t4, title, subtitle, created_at }
-      await tempData.insertData(data)
+      const data = { t1, t3, t4, title, subtitle }
+
+      if(!mainWindow) return
+
+      if (isRecording) {
+        await tempData.insertData(data)
+        console.log("record")
+        const fetchDownsampledData = await tempData.fetchDownsampledData()
+        mainWindow.webContents.send('main-window', {
+          result: fetchDownsampledData,
+          command: 'update-temp-graph'
+        })
+      }
 
       mainWindow.webContents.send('main-window', {
         ...data,
-        command: 'update-temp-graph'
+        command: 'update-temp-display'
       })
+
+
     })
   }
 
@@ -123,7 +134,6 @@ app.on('activate', () => {
 // code. You can also put them in separate files and import them here.
 ipcMain.handle("database", async (event, data) => {
   if (data.command === "fetch-downsampled") return await tempData.fetchDownsampledData()
-  if (data.command === "fetch-downsampled-timestamp") return await tempData.fetchDownsampledTimestamp()
   if (data.command === "insert") return await tempData.insertData(data)
   if (data.command === "soft-delete") return await tempData.softDeleteAllData()
   if (data.command === "hard-delete") return await tempData.hardDeleteAllData()
@@ -166,30 +176,47 @@ ipcMain.on('setting-window', (event, data) => {
   })
 });
 
-ipcMain.on('main-window', (event, data) => {
-  if (data.command == 'start-record' && isDataExists) {
-    dialog.showMessageBox(mainWindow, {
-      'type': 'question',
-      'title': 'Confirmation',
-      'message': "Apakah Anda yakin ingin memulai rekaman? Data lama akan terhapus",
-      'buttons': [
-        'Ya',
-        'Tidak'
-      ]
-    }).then((result) => {
-      if (result.response !== 0) return
+ipcMain.on('main-window', async (event, data) => {
+  try {
+    if (data.command == 'start-record' && data.isDataExists) {
+      const userResponse = await dialog.showMessageBox(mainWindow, {
+        'type': 'question',
+        'title': 'Confirmation',
+        'message': "Apakah Anda yakin ingin memulai rekaman?",
+        'buttons': [
+          'Hapus data dan mulai rekaman',
+          'Lanjut merekam data',
+          'Tidak'
+        ]
+      })
+      console.log(userResponse)
+      if (userResponse.response !== 0) return
 
-      if (result.response === 0) {
-        mainWindow.webContents.send('mainWindow', 'record-confirm')
+      if (userResponse.response === 0) {
+        const softDelete = await tempData.softDeleteAllData()
+        mainWindow.webContents.send('main-window', { command: 'record-confirm' })
+        isRecording = true
+        console.log("soft delete : " + softDelete)
       }
-    })
-  } else if (data.command == 'start-record' && !isDataExists) {
-    mainWindow.webContents.send('mainWindow', 'record-confirm')
+
+      if (userResponse.response === 1) {
+        mainWindow.webContents.send('main-window', { command: 'record-confirm' })
+        isRecording = true
+        console.log("soft delete : " + false)
+      }
+    } else if (data.command == 'start-record' && !data.isDataExists) {
+      mainWindow.webContents.send('main-window', { command: 'record-confirm' })
+      isRecording = true
+      console.log("is record")
+    }
+  } catch (error) {
+    console.log(error)
   }
 
   // Flagging if user stopped recording manually
   // Indicates recording process is successful
   if (data.command == 'stop-record' && data.isStopRecordManually) {
     isStopRecordManually = data.isStopRecordManually
+    isRecording = false
   }
 })
