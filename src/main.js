@@ -1,21 +1,23 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
-let settingWindow, mainWindow, port, writeIntervalId;
-const Store = require('electron-store');
-const store = new Store()
+
+import store from './config/electronStore.js'
 import tempData from './model/tempdata.js';
 import serialPort from './config/serialport.js';
 import commonHelper from './helper/common.js';
-import serialCommand from './helper/serialCommand';
+import serialCommand from './helper/serialCommand.js';
 import { ByteLengthParser } from 'serialport';
+import mockTemp from './test/mockTemp.js';
+import menu from './menu.js';
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+let settingWindow, mainWindow, port, writeIntervalId;
+let count = 0;
+
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
 const createWindow = () => {
-  // Create the browser window.
   mainWindow = new BrowserWindow({
     minWidth: 800,
     minHeight: 600,
@@ -29,15 +31,14 @@ const createWindow = () => {
     },
   });
 
-  // and load the index.html of the app.
+  Menu.setApplicationMenu(menu);
+
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
-
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
 
   const initSerialDevice = async () => {
     port = await serialPort()
@@ -50,7 +51,18 @@ const createWindow = () => {
 
     // TODO: Device model number validation
     // Retry device search if model number is incorrect
+    const test = () => {
+      const intvId = setInterval(() => {
+        if (count > 300) clearInterval(intvId)
+        count++
+        port.port.emitData(Buffer.from('000000' + mockTemp(count).join('').repeat(4) + '000000000000000000000000000000000000000000000000', 'hex'))
+  
+      }, 2000)
+
+    }
+
     port.on('open', () => {
+      console.log("Device connected")
       serialCommand.data.sendOnce(port)
       writeIntervalId = setInterval(() => {
         serialCommand.data.sendOnce(port)
@@ -63,8 +75,8 @@ const createWindow = () => {
       initSerialDevice()
     })
 
-
     parser.on('data', async (byte) => {
+      console.log(byte)
       const t1 = commonHelper.parseTemp(byte[3], byte[4])
       const t2 = commonHelper.parseTemp(byte[5], byte[6])
       const t3 = commonHelper.parseTemp(byte[7], byte[8])
@@ -75,7 +87,7 @@ const createWindow = () => {
 
       const data = { t1, t2, t3, t4, title, subtitle, created_at }
       await tempData.insertData(data)
-      
+
       mainWindow.webContents.send('main-window', {
         ...data,
         command: 'update-temp-graph'
@@ -123,7 +135,7 @@ ipcMain.on('setting-window', (event, data) => {
   if (settingWindow) return settingWindow.focus()
 
   if (data === 'open') {
-    settingWindow = new BrowserWindow({//1. create new Window
+    settingWindow = new BrowserWindow({
       width: 640,
       height: 480,
       minWidth: 640,

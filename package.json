@@ -1,8 +1,8 @@
 {
   "name": "temp-datalogger-378-v2",
-  "productName": "temp-datalogger-378-v2",
+  "productName": "Temp Datalogger 378",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "Temp Datalogger software for Center 378",
   "main": ".vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",
@@ -21,6 +21,8 @@
     "@electron-forge/plugin-fuses": "^7.3.0",
     "@electron-forge/plugin-vite": "^7.3.0",
     "@electron/fuses": "^1.7.0",
+    "@serialport/binding-mock": "^10.2.2",
+    "@serialport/stream": "^12.0.0",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.18",
     "electron": "29.1.4",
@@ -30,7 +32,7 @@
   },
   "keywords": [],
   "author": {
-    "name": "alifankebima",
+    "name": "Alif Anke Bima Putra",
     "email": "alif.anke.bima@gmail.com"
   },
   "license": "MIT",

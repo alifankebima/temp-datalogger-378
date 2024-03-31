@@ -20,7 +20,7 @@ const calculateMinTemp = (lowTemp, input) => {
 
 const calculateAvgTemp = (avgTemp, input) => {
     avgTemp.push(input);
-    if(avgTemp.length > 10) avgTemp.shift();
+    if (avgTemp.length > 10) avgTemp.shift();
     const sum = avgTemp.reduce((acc, val) => acc + val, 0);
     return sum / avgTemp.length;
 }
@@ -30,6 +30,15 @@ const calculateMaxTemp = (maxTemp, input) => {
     return Math.max(maxTemp, input);
 }
 
+const formattedDate = (date) => new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+}).format(new Date(date))
+
 const handleError = (error) => error && console.error(error.message || error);
 
 export default {
@@ -37,5 +46,6 @@ export default {
     calculateMinTemp,
     calculateAvgTemp,
     calculateMaxTemp,
-    handleError
+    handleError,
+    formattedDate
 }

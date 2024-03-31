@@ -3,13 +3,16 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 
 module.exports = {
   packagerConfig: {
+    icon: 'src/assets/icon/vga-cable',
     asar: true,
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+        setupIcon: 'src/assets/icon/vga-cable.ico'
+      },
     },
     {
       name: '@electron-forge/maker-zip',

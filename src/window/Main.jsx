@@ -13,6 +13,9 @@ import {
 } from "recharts";
 import NavbarButton from "../components/NavbarButton";
 import TempDisplay from "../components/TempDisplay";
+import dateTimeAxisTick from "../components/dateTimeAxisTick";
+import commonHelper from "../helper/common";
+import legendGraph from "../components/legendGraph";
 const { ipcRenderer } = require("electron");
 const Store = require("electron-store");
 const store = new Store();
@@ -151,37 +154,37 @@ const Main = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timestamp" />
+                <XAxis dataKey="timestamp" height={60} tick={dateTimeAxisTick} />
                 <YAxis type="number" domain={[20, 80]} />
                 <Line
                   connectNulls
                   type="monotone"
-                  dataKey="T1"
+                  dataKey="t1"
                   stroke="#dc2626"
                   dot={false}
                 />
                 <Line
                   connectNulls
                   type="monotone"
-                  dataKey="T2"
+                  dataKey="t2"
                   stroke="#ca8a04"
                   dot={false}
                 />
                 <Line
                   connectNulls
                   type="monotone"
-                  dataKey="T3"
+                  dataKey="t3"
                   stroke="#16a34a"
                   dot={false}
                 />
                 <Line
                   connectNulls
                   type="monotone"
-                  dataKey="T4"
+                  dataKey="t4"
                   stroke="#2563eb"
                   dot={false}
                 />
-                <Legend />
+                <Legend formatter={legendGraph}/>
               </LineChart>
             </ResponsiveContainer>
           </div>

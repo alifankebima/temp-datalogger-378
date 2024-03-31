@@ -11,10 +11,10 @@ const serialport = async () => {
       path: targetDevice.path,
       baudRate: 9600
     }, (error) => {
-      if(error) throw new Error(error)
+      if (error) throw new Error(error)
     });
 
-      return port;
+    return port;
   } catch (error) {
     console.error("Error connecting to target device : ", error)
   }
