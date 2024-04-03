@@ -3,8 +3,8 @@ const path = require('path');
 
 import store from './config/electronStore.js'
 import tempData from './model/tempdata.js';
-// import serialPort from './config/serialport.js';
-import serialPort from './config/serialmock.js';
+import serialPort from './config/serialport.js';
+// import serialPort from './config/serialmock.js';
 import commonHelper from './helper/common.js';
 import serialCommand from './helper/serialCommand.js';
 import { ByteLengthParser } from 'serialport';
@@ -31,7 +31,8 @@ const createWindow = () => {
     },
   });
 
-  Menu.setApplicationMenu(menu);
+  // Menu.setApplicationMenu(menu);
+  Menu.setApplicationMenu(null);
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -51,18 +52,29 @@ const createWindow = () => {
 
     // TODO: Device model number validation
     // Retry device search if model number is incorrect
-    const test = () => {
-      const intvId = setInterval(() => {
-        count++
-        port.port.emitData(Buffer.from('000000' + mockTemp(count).join('').repeat(4) + '000000000000000000000000000000000000000000000000', 'hex'))
-      }, 2000)
-    }
+    // const test = () => {
+    //   const intvId = setInterval(() => {
+    //     count++
+    //     port.port.emitData(Buffer.from('000000' + mockTemp(count).join('').repeat(4) + '000000000000000000000000000000000000000000000000', 'hex'))
+    //   }, 2000)
+    // }
 
     port.on('open', () => {
-      test()
+      // test()
       console.log("Device connected")
       serialCommand.data.sendOnce(port)
       writeIntervalId = setInterval(() => {
+        if (!port || !port.isOpen) {
+          clearInterval(writeIntervalId)
+          mainWindow.webContents.send('main-window', {
+            t1: null, t2: null, t3: null, t4: null ,
+            command: 'update-temp-display'
+          })
+          isRecording = false
+          mainWindow.webContents.send('main-window', {
+            command: 'stop-recor'
+          })
+        }
         serialCommand.data.sendOnce(port)
       }, 1500)
     });
@@ -71,6 +83,14 @@ const createWindow = () => {
       if (writeIntervalId) clearInterval()
       console.log("Device disconnected")
       initSerialDevice()
+      mainWindow.webContents.send('main-window', {
+        t1: null, t2: null, t3: null, t4: null,
+        command: 'update-temp-display'
+      })
+      isRecording = false
+      mainWindow.webContents.send('main-window', {
+        command: 'stop-record'
+      })
     })
 
     parser.on('data', async (byte) => {
@@ -83,11 +103,10 @@ const createWindow = () => {
 
       const data = { t1, t3, t4, title, subtitle }
 
-      if(!mainWindow) return
+      if (!mainWindow) return
 
       if (isRecording) {
         await tempData.insertData(data)
-        console.log("record")
         const fetchDownsampledData = await tempData.fetchDownsampledData()
         mainWindow.webContents.send('main-window', {
           result: fetchDownsampledData,
@@ -190,7 +209,7 @@ ipcMain.on('main-window', async (event, data) => {
         ]
       })
       console.log(userResponse)
-      if (userResponse.response !== 0) return
+      if (userResponse.response === 2) return
 
       if (userResponse.response === 0) {
         const softDelete = await tempData.softDeleteAllData()

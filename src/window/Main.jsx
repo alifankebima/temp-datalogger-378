@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useState } from "react";
 import { PiRecordFill, PiStopFill } from "react-icons/pi";
-import { IoMdSettings } from "react-icons/io";
+import { IoMdSettings, IoMdSave } from "react-icons/io";
 import {
   LineChart,
   Line,
@@ -18,6 +18,8 @@ import TempDisplay from "../components/TempDisplay";
 import legendGraph from "../components/legendGraph";
 import store from "../config/electronStore.js";
 import commonHelper from "../helper/common.js";
+import FileSaver from "file-saver";
+import { useCurrentPng, useGenerateImage } from "recharts-to-png";
 const { ipcRenderer } = require("electron");
 
 const Main = () => {
@@ -63,12 +65,27 @@ const Main = () => {
     });
   };
   const handleStopRecording = () => {
-    setIsRecording(false)
+    setIsRecording(false);
     ipcRenderer.send("main-window", {
       command: "stop-record",
       isStopRecordManually: true,
     });
   };
+  const [getDivJpeg, { ref }] = useGenerateImage({
+    quality: 0.8,
+    type: 'image/png',
+  });
+  const saveGraphAsImage = useCallback(async () => {
+    const jpeg = await getDivJpeg();
+    if (jpeg) {
+      FileSaver.saveAs(
+        jpeg,
+        `${store.get("config.subtitle")} ${commonHelper.formattedDate(
+          new Date().getTime()
+        )}.png`
+      );
+    }
+  }, []);
   const openSettingWindow = () => {
     ipcRenderer.send("setting-window", { command: "open" });
   };
@@ -82,9 +99,9 @@ const Main = () => {
       }
 
       if (data.command == "record-confirm") {
-        setData([])
+        setData([]);
         setIsRecording(true);
-        console.log("true")
+        console.log("true");
       }
 
       if (data.command === "update-temp-display") {
@@ -115,8 +132,11 @@ const Main = () => {
       }
 
       if (data.command == "update-temp-graph") {
-        console.log("data received")
         setData(data.result);
+      }
+
+      if (data.command == "stop-record") {
+        setIsRecording(false)
       }
     });
 
@@ -153,6 +173,15 @@ const Main = () => {
             } text-4xl`}
           />
           <div className="text-sm">Berhenti</div>
+        </NavbarButton>
+
+        <NavbarButton onClick={saveGraphAsImage} disabled={!data.length}>
+          <IoMdSave
+            className={`${
+              data.length ? "text-indigo-900" : "text-gray-300"
+            } text-4xl`}
+          />
+          <div className="text-sm">Simpan</div>
         </NavbarButton>
 
         <div className="border-l border-gray-400 h-16 w-0.5 mx-2" />
@@ -201,9 +230,9 @@ const Main = () => {
             isDisabled={store.get("config.t4monitor")}
           />
         </div>
-        <div className="w-full items-center flex flex-col">
+        <div className="w-full items-center flex flex-col" ref={ref}>
           <div className="text-xl text-center">{title}</div>
-          <div className="text-lg text-center whitespace-pre-line line-clamp-4">
+          <div className="text-lg text-center whitespace-pre-line line-clamp-4 min-h-10">
             {subtitle}
           </div>
           <div className="flex-grow w-full">
@@ -213,7 +242,7 @@ const Main = () => {
                 margin={{
                   top: 5,
                   right: 35,
-                  left: 35,
+                  left: 25,
                   bottom: 10,
                 }}
               >
@@ -260,20 +289,24 @@ const Main = () => {
                   dataKey="t1"
                   stroke="#dc2626"
                   dot={false}
+                  animationDuration={0}
+                  strokeWidth={2}
                 />
-                <Line
+                {/* <Line
                   connectNulls
                   type="monotone"
                   dataKey="t2"
                   stroke="#ca8a04"
                   dot={false}
-                />
+                /> */}
                 <Line
                   connectNulls
                   type="monotone"
                   dataKey="t3"
                   stroke="#16a34a"
                   dot={false}
+                  animationDuration={0}
+                  strokeWidth={2}
                 />
                 <Line
                   connectNulls
@@ -281,6 +314,8 @@ const Main = () => {
                   dataKey="t4"
                   stroke="#2563eb"
                   dot={false}
+                  animationDuration={0}
+                  strokeWidth={2}
                 />
                 <Tooltip
                   labelFormatter={(timestamp) =>

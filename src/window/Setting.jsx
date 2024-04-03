@@ -84,7 +84,7 @@ export default function Setting() {
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={value} onChange={handleTabs}>
           <Tab label="Grafik" {...a11yProps(0)} />
-          <Tab label="Notifikasi" {...a11yProps(1)} />
+          {/* <Tab label="Notifikasi" {...a11yProps(1)} /> */}
         </Tabs>
       </Box>
       <CustomTabPanel value={value} index={0}>
@@ -131,9 +131,9 @@ export default function Setting() {
           </div>
         </form>
       </CustomTabPanel>
-      <CustomTabPanel value={value} index={1}>
+      {/* <CustomTabPanel value={value} index={1}>
         Notifikasi
-      </CustomTabPanel>
+      </CustomTabPanel> */}
     </Box>
   );
 }

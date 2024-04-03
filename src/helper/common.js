@@ -37,15 +37,14 @@ const calculateMaxTemp = (maxTemp, input) => {
 const formattedDate = (timestamp) => {
     const date = new Date(timestamp)
     const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu']
-    // return hari[date.getDay()] + " " + date.toLocaleString()
-    return hari[date.getDay()] + " " + new Intl.DateTimeFormat('en-GB', {
+    return hari[date.getDay()] + " " + new Intl.DateTimeFormat('id-ID', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-    }).format(date)
+    }).format(date).split('/').join('-')
 }
 
 const handleError = (error) => error && console.error(error.message || error);
