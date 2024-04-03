@@ -1,5 +1,5 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
-const path = require('path');
+import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
+import { join } from 'path';
 
 import store from './config/electronStore.js'
 import tempData from './model/tempdata.js';
@@ -26,8 +26,8 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true,
-      preload: path.join(__dirname, 'preload.js'),
+      // enableRemoteModule: true,
+      preload: join(__dirname, 'preload.js'),
     },
   });
 
@@ -38,7 +38,7 @@ const createWindow = () => {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    mainWindow.loadFile(join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
 
   const initSerialDevice = async () => {
@@ -67,7 +67,7 @@ const createWindow = () => {
         if (!port || !port.isOpen) {
           clearInterval(writeIntervalId)
           mainWindow.webContents.send('main-window', {
-            t1: null, t2: null, t3: null, t4: null ,
+            t1: null, t2: null, t3: null, t4: null,
             command: 'update-temp-display'
           })
           isRecording = false
