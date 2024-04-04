@@ -20,6 +20,7 @@ export default defineConfig((env) => {
         input: {
           main_window: resolve(__dirname, "index.html"),
           setting_window: resolve(__dirname, "setting.html"),
+          pdf_window: resolve(__dirname, "pdf.html"),
         }
       }
     },

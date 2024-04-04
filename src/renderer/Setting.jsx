@@ -1,10 +1,12 @@
 import * as React from "react";
+import ReactDOM from 'react-dom/client';
 import PropTypes from "prop-types";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import store from "../config/electronStore.js";
+import '../assets/css/index.css';
 const { ipcRenderer } = require("electron");
 
 function CustomTabPanel(props) {
@@ -40,7 +42,7 @@ function a11yProps(index) {
   };
 }
 
-export default function Setting() {
+function Setting() {
   const [value, setValue] = React.useState(0);
   const [formData, setFormData] = React.useState({
     title: store.get("config.title"),
@@ -137,3 +139,7 @@ export default function Setting() {
     </Box>
   );
 }
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <Setting />
+)

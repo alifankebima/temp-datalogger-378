@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect } from "react";
+import ReactDOM from 'react-dom/client';
 import { useState } from "react";
 import { PiRecordFill, PiStopFill } from "react-icons/pi";
-import { IoMdSettings, IoMdSave } from "react-icons/io";
+import { IoMdSettings, IoMdSave, IoMdPrint } from "react-icons/io";
 import {
   LineChart,
   Line,
@@ -12,14 +13,15 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import dateTimeAxisTick from "../components/dateTimeAxisTick";
-import NavbarButton from "../components/NavbarButton";
-import TempDisplay from "../components/TempDisplay";
-import legendGraph from "../components/legendGraph";
+import dateTimeAxisTick from "../components/dateTimeAxisTick/index.jsx";
+import NavbarButton from "../components/NavbarButton/index.jsx";
+import TempDisplay from "../components/TempDisplay/index.jsx";
+import legendGraph from "../components/legendGraph/index.jsx";
 import store from "../config/electronStore.js";
 import commonHelper from "../helper/common.js";
 import FileSaver from "file-saver";
 import { useCurrentPng, useGenerateImage } from "recharts-to-png";
+import '../assets/css/index.css';
 const { ipcRenderer } = require("electron");
 
 const Main = () => {
@@ -88,6 +90,9 @@ const Main = () => {
   }, []);
   const openSettingWindow = () => {
     ipcRenderer.send("setting-window", { command: "open" });
+  };
+  const openPrintWindow = () => {
+    ipcRenderer.send("print-window", { command: "open" });
   };
 
   // Run on component mount & unmount only
@@ -175,13 +180,24 @@ const Main = () => {
           <div className="text-sm">Berhenti</div>
         </NavbarButton>
 
+        <div className="border-l border-gray-400 h-16 w-0.5 mx-2" />
+
         <NavbarButton onClick={saveGraphAsImage} disabled={!data.length}>
           <IoMdSave
+            className={`${
+              data.length ? "text-sky-900" : "text-gray-300"
+            } text-4xl`}
+          />
+          <div className="text-sm">Simpan</div>
+        </NavbarButton>
+
+        <NavbarButton onClick={openPrintWindow} disabled={!data.length}>
+          <IoMdPrint
             className={`${
               data.length ? "text-indigo-900" : "text-gray-300"
             } text-4xl`}
           />
-          <div className="text-sm">Simpan</div>
+          <div className="text-sm">Print</div>
         </NavbarButton>
 
         <div className="border-l border-gray-400 h-16 w-0.5 mx-2" />
@@ -332,4 +348,6 @@ const Main = () => {
   );
 };
 
-export default Main;
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <Main />
+)

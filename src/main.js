@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
+const puppeteer = require('puppeteer');
 
 import store from './config/electronStore.js'
 import tempData from './model/tempdata.js';
@@ -11,7 +12,10 @@ import { ByteLengthParser } from 'serialport';
 import mockTemp from './test/mockTemp.js';
 import menu from './menu.js';
 
-let settingWindow, mainWindow, port, writeIntervalId, isStopRecordManually, count = 0, isRecording = false
+// Electron BrowserWindow
+let mainWindow = null, settingWindow = null, printWindow = null;
+// Other variables
+let port = null, writeIntervalId = 0, isStopRecordManually = false, count = 0, isRecording = false
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -67,12 +71,12 @@ const createWindow = () => {
         if (!port || !port.isOpen) {
           clearInterval(writeIntervalId)
           mainWindow.webContents.send('main-window', {
-            t1: null, t2: null, t3: null, t4: null ,
+            t1: null, t2: null, t3: null, t4: null,
             command: 'update-temp-display'
           })
           isRecording = false
           mainWindow.webContents.send('main-window', {
-            command: 'stop-recor'
+            command: 'stop-record'
           })
         }
         serialCommand.data.sendOnce(port)
@@ -158,6 +162,21 @@ ipcMain.handle("database", async (event, data) => {
   if (data.command === "hard-delete") return await tempData.hardDeleteAllData()
 })
 
+const printOptions = {
+  silent: false,
+  printBackground: true,
+  color: true,
+  margin: {
+    marginType: 'printableArea',
+  },
+  landscape: false,
+  pagesPerSheet: 1,
+  collate: false,
+  copies: 1,
+  header: 'Page header',
+  footer: 'Page footer',
+};
+
 // handle opening and closing setting window
 ipcMain.on('setting-window', (event, data) => {
   if (settingWindow && data.command == 'close') return settingWindow.close()
@@ -239,3 +258,46 @@ ipcMain.on('main-window', async (event, data) => {
     isRecording = false
   }
 })
+
+ipcMain.on('print-window', async (event, data) => {
+  if (printWindow && data.command == 'close') return printWindow.close()
+  if (printWindow) return printWindow.focus()
+
+  if (data.command == 'open') {
+    console.log('ef')
+    printWindow = new BrowserWindow({
+      width: 800,
+      height: 600,
+    });
+
+    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+      printWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL + '/pdf.html');
+    } else {
+      printWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/pdf.html`));
+    }
+    printWindow.webContents.once("did-finish-load", () => {
+      console.log("ey")
+      printWindow.webContents.print(printOptions, (success, failureReason) => {
+        console.log("Print Initiated in Main...");
+        if (!success) console.log(failureReason);
+      })
+      //   printWindow.webContents.printToPDF({}).then(data => {
+      //     const url = "data:application/pdf;base64," + Buffer.from(data).toString('base64')
+      //     console.log(url)
+      //     printWindow.loadURL(url)
+      //     //   printWindow.webContents.on("ready-to-show", () => {
+      //     //     printWindow.once("page-title-updated", (e) => e.preventDefault());
+      //     //     printWindow.show();
+      //     //   });
+
+      //     //   printWindow.webContents.on("closed", () => printWindow = null);
+      //     //   printWindow.loadURL(url);
+      //     // })
+
+      //   }).catch((error) => {
+      //     console.log(error);
+      //   })
+      })
+    }
+  printWindow.on("closed", () => printWindow = null)
+  });
