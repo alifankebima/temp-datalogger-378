@@ -2,7 +2,6 @@ import { defineConfig, mergeConfig } from 'vite';
 import {
   getBuildConfig,
   getBuildDefine,
-  external,
   pluginHotRestart,
 } from './vite.base.config.mjs';
 import react from '@vitejs/plugin-react';

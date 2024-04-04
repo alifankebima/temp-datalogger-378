@@ -92,7 +92,7 @@ function Setting() {
       <CustomTabPanel value={value} index={0}>
         <form onSubmit={handleSubmit}>
           <div>
-            <label for="title" class="block mb-2 text-sm font-medium me-4">
+            <label htmlFor="title" className="block mb-2 text-sm font-medium me-4">
               Judul
             </label>
             <input
@@ -100,11 +100,11 @@ function Setting() {
               name="title"
               onChange={handleChange}
               value={formData.title}
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
             />
           </div>
           <div className="mt-4">
-            <label for="subtitle" class="block mb-2 text-sm font-medium">
+            <label htmlFor="subtitle" className="block mb-2 text-sm font-medium">
               Subjudul
             </label>
             <textarea
@@ -113,20 +113,20 @@ function Setting() {
               onChange={handleChange}
               value={formData.subtitle}
               rows="3"
-              class="block p-2.5 w-full text-sm  bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              className="block p-2.5 w-full text-sm  bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 resize-none"
             ></textarea>
           </div>
           <div className="flex justify-end items-end mt-4">
             <button
               type="button"
               onClick={closeSettingWindow}
-              class=" text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
+              className=" text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
             >
               Batal
             </button>
             <button
               type="submit"
-              class=" text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
+              className=" text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
             >
               Terapkan
             </button>

@@ -1,6 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
-const puppeteer = require('puppeteer');
 
 import store from './config/electronStore.js'
 import tempData from './model/tempdata.js';
@@ -9,13 +8,11 @@ import serialPort from './config/serialport.js';
 import commonHelper from './helper/common.js';
 import serialCommand from './helper/serialCommand.js';
 import { ByteLengthParser } from 'serialport';
-import mockTemp from './test/mockTemp.js';
-import menu from './menu.js';
 
 // Electron BrowserWindow
 let mainWindow = null, settingWindow = null, printWindow = null;
 // Other variables
-let port = null, writeIntervalId = 0, isStopRecordManually = false, count = 0, isRecording = false
+let port = null, writeIntervalId = 0, isStopRecordManually = false, isRecording = false
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -37,14 +34,14 @@ const createWindow = () => {
 
   // Menu.setApplicationMenu(menu);
   Menu.setApplicationMenu(null);
-
+  /* eslint-disable no-undef */
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
-
+  /* eslint-enable no-undef */
   const initSerialDevice = async () => {
     port = await serialPort()
     if (!port) return setTimeout(initSerialDevice, 1500)
@@ -105,7 +102,7 @@ const createWindow = () => {
       const title = store.get('config.title')
       const subtitle = store.get('config.subtitle')
 
-      const data = { t1, t3, t4, title, subtitle }
+      const data = { t1, t2, t3, t4, title, subtitle }
 
       if (!mainWindow) return
 
@@ -197,12 +194,13 @@ ipcMain.on('setting-window', (event, data) => {
       },
     });
 
+    /* eslint-disable no-undef */
     if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
       settingWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL + '/setting.html');
     } else {
       settingWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/setting.html`));
     }
-
+    /* eslint-enable no-undef */
     settingWindow.once('ready-to-show', () => settingWindow.show())
   }
 
@@ -269,12 +267,13 @@ ipcMain.on('print-window', async (event, data) => {
       width: 800,
       height: 600,
     });
-
+    /* eslint-disable no-undef */
     if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
       printWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL + '/pdf.html');
     } else {
       printWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/pdf.html`));
     }
+    /* eslint-enable no-undef */
     printWindow.webContents.once("did-finish-load", () => {
       console.log("ey")
       printWindow.webContents.print(printOptions, (success, failureReason) => {
@@ -297,7 +296,7 @@ ipcMain.on('print-window', async (event, data) => {
       //   }).catch((error) => {
       //     console.log(error);
       //   })
-      })
-    }
+    })
+  }
   printWindow.on("closed", () => printWindow = null)
-  });
+});
