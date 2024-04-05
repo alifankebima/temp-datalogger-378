@@ -20,7 +20,7 @@ import legendGraph from "../components/legendGraph/index.jsx";
 import store from "../config/electronStore.js";
 import commonHelper from "../helper/common.js";
 import FileSaver from "file-saver";
-import { useCurrentPng, useGenerateImage } from "recharts-to-png";
+import { useGenerateImage } from "recharts-to-png";
 import '../assets/css/index.css';
 const { ipcRenderer } = require("electron");
 
@@ -191,7 +191,7 @@ const Main = () => {
           <div className="text-sm">Simpan</div>
         </NavbarButton>
 
-        <NavbarButton onClick={openPrintWindow} disabled={!data.length}>
+        <NavbarButton onClick={openPrintWindow} >
           <IoMdPrint
             className={`${
               data.length ? "text-indigo-900" : "text-gray-300"

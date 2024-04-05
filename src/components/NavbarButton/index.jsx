@@ -4,7 +4,7 @@ const NavbarButton = ({ children, onClick, disabled }) => {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={onClick || true}
       disabled={disabled}
       className={`${
         !disabled

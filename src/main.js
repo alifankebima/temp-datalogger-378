@@ -108,7 +108,7 @@ const createWindow = () => {
 
       if (isRecording) {
         await tempData.insertData(data)
-        const fetchDownsampledData = await tempData.fetchDownsampledData()
+        const fetchDownsampledData = await tempData.fetchDownsampledData({recording_sessions_id:""})
         mainWindow.webContents.send('main-window', {
           result: fetchDownsampledData,
           command: 'update-temp-graph'
@@ -153,7 +153,7 @@ app.on('activate', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 ipcMain.handle("database", async (event, data) => {
-  if (data.command === "fetch-downsampled") return await tempData.fetchDownsampledData()
+  if (data.command === "fetch-downsampled") return await tempData.fetchDownsampledData({recording_sessions_id:''})
   if (data.command === "insert") return await tempData.insertData(data)
   if (data.command === "soft-delete") return await tempData.softDeleteAllData()
   if (data.command === "hard-delete") return await tempData.hardDeleteAllData()
@@ -276,10 +276,10 @@ ipcMain.on('print-window', async (event, data) => {
     /* eslint-enable no-undef */
     printWindow.webContents.once("did-finish-load", () => {
       console.log("ey")
-      printWindow.webContents.print(printOptions, (success, failureReason) => {
-        console.log("Print Initiated in Main...");
-        if (!success) console.log(failureReason);
-      })
+      // printWindow.webContents.print(printOptions, (success, failureReason) => {
+      //   console.log("Print Initiated in Main...");
+      //   if (!success) console.log(failureReason);
+      // })
       //   printWindow.webContents.printToPDF({}).then(data => {
       //     const url = "data:application/pdf;base64," + Buffer.from(data).toString('base64')
       //     console.log(url)

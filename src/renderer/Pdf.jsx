@@ -4,7 +4,14 @@ import '../assets/css/index.css';
 
 const Pdf = () => {
   return (
-    <div>Pdf</div>
+    <div>
+      <div className='flex'>
+        <button type="button">Print</button>
+      </div>
+      <div className='flex'>
+        <div className='uppercase'>PT. Sumber Rezeki Palletindo</div>
+      </div>
+    </div>
   )
 }
 
