@@ -1,18 +1,17 @@
-const { SerialPort } = require('serialport');
-const { ipcRenderer } = require("electron");
+import { SerialPort } from 'serialport';
 
 const serialport = async () => {
   try {
     const ports = await SerialPort.list()
-    const targetDevice = ports.find(port => port.manufacturer.includes('Silicon Laboratories'))
+    const targetDevice = ports.find(port => port.manufacturer?.includes('Silicon Laboratories'))
     if (!targetDevice) return console.log("Target device not found, devices list : \n",
-      ports.map(port => port.friendlyName).join(", "))
+      ports.map(port => port.productId).join(", "))
 
     const port = new SerialPort({
       path: targetDevice.path,
       baudRate: 9600
     }, (error) => {
-      if (error) throw new Error(error)
+      console.error(error)
     });
 
     return port;

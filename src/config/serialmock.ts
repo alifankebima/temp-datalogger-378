@@ -1,5 +1,5 @@
-const { SerialPortStream } = require('@serialport/stream');
-const { MockBinding } = require('@serialport/binding-mock');
+import { SerialPortStream } from '@serialport/stream';
+import { MockBinding } from '@serialport/binding-mock';
 
 const serialport = async () => {
   try {

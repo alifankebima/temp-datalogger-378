@@ -25,6 +25,7 @@
     "@serialport/stream": "^12.0.0",
     "@types/react": "^18.2.74",
     "@types/react-dom": "^18.2.23",
+    "@types/serialport": "^8.0.5",
     "@typescript-eslint/eslint-plugin": "^7.5.0",
     "@typescript-eslint/parser": "^7.5.0",
     "@vitejs/plugin-react": "^4.2.1",
