@@ -3,15 +3,15 @@ import React from "react";
 interface TempDisplayProps {
   name?: string;
   color?: React.ComponentProps<"div">["className"];
-  currentTemp?: number;
-  minTemp?: number;
-  avgTemp?: number;
-  maxTemp?: number;
+  currentTemp?: number | null;
+  minTemp?: number | null;
+  avgTemp?: number | null;
+  maxTemp?: number | null;
   disabled?: boolean;
   unit?: "C" | "F";
 }
 
-const tempLimit = (input: number | null): string => {
+const tempLimit = (input?: number | null): string => {
   if (typeof input !== "number") return "--.-";
   if (input >= -100 && input <= 200) return input.toFixed(1);
   if (input > 200) return ">200.0";
@@ -22,11 +22,11 @@ const tempLimit = (input: number | null): string => {
 const TempDisplay: React.FC<TempDisplayProps> = ({
   name = "T",
   color,
-  currentTemp = null,
-  minTemp = null,
-  avgTemp = null,
-  maxTemp = null,
-  disabled = false,
+  currentTemp,
+  minTemp,
+  avgTemp,
+  maxTemp,
+  disabled,
   unit = "C",
 }) => {
   return (

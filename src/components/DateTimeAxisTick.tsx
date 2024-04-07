@@ -1,22 +1,26 @@
-import React from "react";
+import React, { ReactElement, ReactNode, SVGProps } from "react";
 
-interface DateTimeAxisTickProps {
-  x?: string | number;
-  y?: string | number;
-  stroke?: string;
-  payload: {
-    value?: number;
+// interface DateTimeAxisTickProps {
+//   x?: string | number;
+//   y?: string | number;
+//   stroke?: string;
+//   payload: {
+//     value?: number;
+//   };
+//   showDate?: boolean;
+// }
+
+interface CustomTickProps {
+  x?: number;
+  y?: number;
+  payload?: {
+    value: number;
   };
   showDate?: boolean;
 }
 
-const DateTimeAxisTick: React.FC<DateTimeAxisTickProps> = ({
-  x = 0,
-  y = 0,
-  payload,
-  showDate = false,
-}) => {
-  const date = new Date(payload.value ?? 0);
+const DateTimeAxisTick = ({ x, y, payload, showDate }: CustomTickProps) => {
+  const date = new Date(payload?.value ?? 0);
   let formattedTime: string;
 
   if (showDate) {
