@@ -93,3 +93,6 @@ out/
 
 # Sqlite database
 *.db
+
+# PDF
+*.pdf
