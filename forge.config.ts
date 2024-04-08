@@ -24,14 +24,14 @@ const config: ForgeConfig = {
           config: 'vite.main.config.ts',
         },
         {
-          entry: 'src/preload/mainWindow.ts',
+          entry: 'src/window/main/main.preload.ts',
           config: 'vite.preload.config.ts',
         },
       ],
       renderer: [
         {
           name: 'main_window',
-          config: 'vite.renderer.config.ts',
+          config: 'vite.mainWindow.config.ts',
         },
       ],
     }),

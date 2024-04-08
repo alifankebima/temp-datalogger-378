@@ -17,7 +17,7 @@ const createWindow = () => {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, 'mainWindow.js'),
+      preload: path.join(__dirname, 'main.preload.js'),
       // nodeIntegration: true,
       // contextIsolation: false
     },

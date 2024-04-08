@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { ElectronAPI, GraphData, Temps } from "../types/mainWindow";
+import { ElectronAPI, GraphData, Temps } from "../../types/mainWindow";
 
 const electronAPI: ElectronAPI = {
     getConfig: () => ipcRenderer.invoke('electron-store:get', 'config'),
