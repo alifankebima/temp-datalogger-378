@@ -1,18 +1,6 @@
 import Store from 'electron-store';
+import { StoreSchema } from '../types/electronStore';
 
-interface StoreSchema {
-    config:{
-        title: string;
-        subtitle: string;
-        minGraphTemp: number;
-        maxGraphTemp: number;
-        t1monitor: boolean;
-        t2monitor: boolean;
-        t3monitor: boolean;
-        t4monitor: boolean;
-    }
-}
-Store.initRenderer()
 const store = new Store<StoreSchema>({
     schema: {
         // Stores user defined configuration in app settings

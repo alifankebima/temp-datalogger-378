@@ -1,5 +1,6 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
+import store from './config/electronStore';
 
 let mainWindow: BrowserWindow | null = null;
 // let settingWindow: BrowserWindow | null = null;
@@ -16,9 +17,9 @@ const createWindow = () => {
     width: 800,
     height: 600,
     webPreferences: {
-      // preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      contextIsolation: false
+      preload: path.join(__dirname, 'mainWindow.js'),
+      // nodeIntegration: true,
+      // contextIsolation: false
     },
   });
   console.log(__dirname)
@@ -59,3 +60,17 @@ app.on('activate', () => {
 // code. You can also put them in separate files and import them here.
 // import { SerialPort } from 'serialport';
 // SerialPort.list().then(data => console.log(data))
+ipcMain.on('main-window', async (event, data: string) => {
+  console.log(data)
+})
+
+
+// electron-store
+ipcMain.handle('electron-store:get', (event, key: string) => {
+  return store.get(key)
+});
+
+ipcMain.on("ping", (_event, _args) => {
+  console.log('ping')
+  mainWindow?.webContents.send('pong', (_args))
+})
