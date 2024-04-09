@@ -21,7 +21,8 @@ interface SelectData extends UpdateData {
 }
 
 const fetchLastData = () => {
-    return sqlite.fetchAll<SelectData>(`
+    return new Promise<SelectData | null | undefined>((resolve, reject) => {
+        sqlite.fetchAll<SelectData>(`
         SELECT 
             id, graph_title, graph_subtitle, start_date, end_date, 
             product_type_wood, product_type_pallet, qty_pcs, qty_m3, 
@@ -29,8 +30,10 @@ const fetchLastData = () => {
         FROM recording_sessions 
         WHERE deleted_at IS NULL 
         ORDER BY created_at DESC 
-        LIMIT 1;`
-    );
+        LIMIT 1;`)
+        .then(result => resolve(result.length ? result[0] : null))
+        .catch(error => reject(error));
+    })
 }
 
 const insertData = (data: InsertData): Promise<boolean> => {

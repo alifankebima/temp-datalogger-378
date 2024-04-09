@@ -27,19 +27,19 @@ const store = new Store<StoreSchema>({
                 // Sensor monitoring configuration
                 t1monitor: {
                     type: 'boolean',
-                    default: false
+                    default: true
                 },
                 t2monitor: {
                     type: 'boolean',
-                    default: true
+                    default: false
                 },
                 t3monitor: {
                     type: 'boolean',
-                    default: false
+                    default: true
                 },
                 t4monitor: {
                     type: 'boolean',
-                    default: false
+                    default: true
                 },
             }
         }

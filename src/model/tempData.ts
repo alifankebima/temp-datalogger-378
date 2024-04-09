@@ -1,3 +1,4 @@
+import { GraphData } from '../types/mainWindow';
 import sqlite from '../config/sqlite'
 
 interface InsertData {
@@ -25,11 +26,10 @@ const fetchAllData = (data: SelectData) => {
     );
 }
 
-const fetchDownsampledData = (data: SelectData) => {
-    const { recording_sessions_id } = data;
+const fetchDownsampledData = (recording_sessions_id: number) => {
     const values = new Array(4).fill(recording_sessions_id);
 
-    return sqlite.fetchAll<SelectData>(`
+    return sqlite.fetchAll<GraphData>(`
         WITH total_records AS (
             SELECT COUNT(*) AS total FROM temp_data WHERE recording_sessions_id=? 
             AND deleted_at IS NULL

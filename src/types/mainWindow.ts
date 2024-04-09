@@ -11,12 +11,7 @@ export interface GraphData extends Temps {
     created_at: number
 }
 
-export interface IpcMainWindow extends Temps<number> {
-    command: string
-    result: GraphData[]
-}
-
-export interface ElectronAPI {
+export interface MainWindowElectronAPI {
     getConfig: () => Promise<StoreSchema["config"]>;
     startRecord: (isDataExists: boolean) => void;
     stopRecord: (isStoppedManually: boolean) => void;
@@ -28,10 +23,10 @@ export interface ElectronAPI {
     removeUpdateTempDisplay: () => void;
     updateConfig: (callback: (data:StoreSchema['config']) => void) => void;
     removeUpdateConfig: () => void;
-    startRecordConfirmed: (callback: () => void) => void;
-    removeStartRecordConfirmed: () => void;
-    stopRecordConfirmed: (callback: () => void) => void;
-    removeStopRecordConfirmed: () => void;
+    startRecordCallback: (callback: () => void) => void;
+    removeStartRecordCallback: () => void;
+    stopRecordCallback: (callback: () => void) => void;
+    removeStopRecordCallback: () => void;
     ping: () => void,
     pong: () => void
 }

@@ -11,24 +11,24 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import dateTimeAxisTick from "../components/DateTimeAxisTick";
-import NavbarButton from "../components/NavbarButton";
-import TempDisplay from "../components/TempDisplay";
-import legendGraph from "../components/LegendGraph";
-import commonHelper from "../helper/commonHelper";
+import dateTimeAxisTick from "../../components/DateTimeAxisTick";
+import NavbarButton from "../../components/NavbarButton";
+import TempDisplay from "../../components/TempDisplay";
+import legendGraph from "../../components/LegendGraph";
+import commonHelper from "../../helper/commonHelper";
 import FileSaver from "file-saver";
 import { useGenerateImage } from "recharts-to-png";
-import "../assets/css/index.css";
+import "../../assets/css/index.css";
 import {
-  ElectronAPI,
+  MainWindowElectronAPI,
   GraphData,
   Temps,
-} from "../types/mainWindow";
-import { StoreSchema } from "../types/electronStore";
+} from "../../types/mainWindow";
+import { StoreSchema } from "../../types/electronStore";
 
 declare global {
   interface Window {
-    electronAPI: ElectronAPI;
+    electronAPI: MainWindowElectronAPI;
   }
 }
 
@@ -36,7 +36,10 @@ const Main = () => {
   // User defined config
   const [config, setConfig] = useState<StoreSchema["config"]>();
   useEffect(() => {
-    (async () => setConfig(await window.electronAPI.getConfig()))();
+    (async () => {
+      setConfig(await window.electronAPI.getConfig());
+      console.log(await window.electronAPI.getConfig());
+    })();
   }, []);
 
   // Graph states
@@ -90,8 +93,8 @@ const Main = () => {
 
   // Run on component mount & unmount only
   useEffect(() => {
-    window.electronAPI.ping()
-    window.electronAPI.pong()
+    window.electronAPI.ping();
+    window.electronAPI.pong();
     window.electronAPI.updateGraph((data) => setGraphData(data));
     window.electronAPI.updateTempDisplay((data) => {
       setCurrentTemp({
@@ -101,10 +104,10 @@ const Main = () => {
         t4: data.t4,
       });
       setMinTemp((prev) => ({
-        t1: commonHelper.calcMin(prev.t1, data.t1),
-        t2: commonHelper.calcMin(prev.t2, data.t2),
-        t3: commonHelper.calcMin(prev.t3, data.t3),
-        t4: commonHelper.calcMin(prev.t4, data.t4),
+        t1: commonHelper.calcMin(prev.t1, data.t1 ?? prev.t1),
+        t2: commonHelper.calcMin(prev.t2, data.t2 ?? prev.t2),
+        t3: commonHelper.calcMin(prev.t3, data.t3 ?? prev.t3),
+        t4: commonHelper.calcMin(prev.t4, data.t4 ?? prev.t4),
       }));
       setAvgTemp((prev) => ({
         t1: commonHelper.shiftNumToArray(prev.t1, data.t1),
@@ -113,20 +116,20 @@ const Main = () => {
         t4: commonHelper.shiftNumToArray(prev.t4, data.t4),
       }));
       setMaxTemp((prev) => ({
-        t1: commonHelper.calcMax(prev.t1, data.t1),
-        t2: commonHelper.calcMax(prev.t2, data.t2),
-        t3: commonHelper.calcMax(prev.t3, data.t3),
-        t4: commonHelper.calcMax(prev.t4, data.t4),
+        t1: commonHelper.calcMax(prev.t1, data.t1 ?? prev.t1),
+        t2: commonHelper.calcMax(prev.t2, data.t2 ?? prev.t2),
+        t3: commonHelper.calcMax(prev.t3, data.t3 ?? prev.t3),
+        t4: commonHelper.calcMax(prev.t4, data.t4 ?? prev.t4),
       }));
     });
     window.electronAPI.updateConfig((data) => setConfig(data));
-    window.electronAPI.startRecordConfirmed(() => {
+    window.electronAPI.startRecordCallback(() => {
       setGraphData([]);
       setIsRecording(true);
     });
-    window.electronAPI.stopRecordConfirmed(() => {
+    window.electronAPI.stopRecordCallback(() => {
       setIsRecording(false);
-    })
+    });
 
     // Load previous record data, in case of app crash
     // (async () => {
@@ -141,8 +144,8 @@ const Main = () => {
       window.electronAPI.removeUpdateGraph();
       window.electronAPI.removeUpdateTempDisplay();
       window.electronAPI.removeUpdateConfig();
-      window.electronAPI.removeStartRecordConfirmed();
-      window.electronAPI.removeStopRecordConfirmed();
+      window.electronAPI.removeStartRecordCallback();
+      window.electronAPI.removeStopRecordCallback();
     };
   }, []);
 
@@ -203,7 +206,9 @@ const Main = () => {
             minTemp={minTemp.t1}
             avgTemp={commonHelper.calcAvgArray(avgTemp.t1)}
             maxTemp={maxTemp.t1}
-            disabled={config?.t1monitor}
+            disabled={
+              config?.t1monitor !== undefined ? !config.t1monitor : false
+            }
           />
           <TempDisplay
             name="T2"
@@ -212,7 +217,9 @@ const Main = () => {
             minTemp={minTemp.t2}
             avgTemp={commonHelper.calcAvgArray(avgTemp.t2)}
             maxTemp={maxTemp.t2}
-            disabled={config?.t2monitor}
+            disabled={
+              config?.t2monitor !== undefined ? !config.t2monitor : false
+            }
           />
           <TempDisplay
             name="T3"
@@ -221,7 +228,9 @@ const Main = () => {
             minTemp={minTemp.t3}
             avgTemp={commonHelper.calcAvgArray(avgTemp.t3)}
             maxTemp={maxTemp.t3}
-            disabled={config?.t3monitor}
+            disabled={
+              config?.t3monitor !== undefined ? !config.t3monitor : false
+            }
           />
           <TempDisplay
             name="T4"
@@ -230,7 +239,9 @@ const Main = () => {
             minTemp={minTemp.t4}
             avgTemp={commonHelper.calcAvgArray(avgTemp.t4)}
             maxTemp={maxTemp.t4}
-            disabled={config?.t4monitor}
+            disabled={
+              config?.t4monitor !== undefined ? !config.t4monitor : false
+            }
           />
         </div>
         <div className="w-full items-center flex flex-col" ref={ref}>
