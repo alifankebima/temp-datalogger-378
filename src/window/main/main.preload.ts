@@ -5,7 +5,7 @@ const electronAPI: MainWindowElectronAPI = {
     getConfig: () => ipcRenderer.invoke('electron-store:get', 'config'),
     startRecord: (isDataExists) => ipcRenderer.send("main-window:start-record", isDataExists),
     stopRecord: (isStoppedManually) => ipcRenderer.send("main-window:stop-record", isStoppedManually),
-    manageSettingWindow: (manage) => ipcRenderer.send("setting-windows:manage", manage),
+    manageSettingWindow: (manage) => ipcRenderer.send("setting-window:manage", manage),
     managePrintWindow: (manage) => ipcRenderer.send("print-window:manage", manage),
     updateGraph: (callback) => ipcRenderer.on("main-window:update-graph", (_event, data: GraphData[]) => callback(data)),
     removeUpdateGraph: () => ipcRenderer.removeAllListeners("main-window:update-graph"),

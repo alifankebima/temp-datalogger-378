@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
 import path from 'path';
 import store from './config/electronStore';
 import tempData from './model/tempData';
@@ -10,7 +10,7 @@ import { Temps } from './types/mainWindow';
 import recordingSessions from './model/recordingSessions';
 
 let mainWindow: BrowserWindow | null = null;
-// let settingWindow: BrowserWindow | null = null;
+let settingWindow: BrowserWindow | null = null;
 let isRecording = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let isStopRecordManually = false
@@ -35,27 +35,24 @@ const createWindow = () => {
     },
   });
 
+  Menu.setApplicationMenu(null);
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
-
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
 };
-
-
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', async () => {
   if (process.platform !== 'darwin') {
-    if(isStopRecordManually) {
+    if (isStopRecordManually) {
       await tempData.softDeleteAllData()
-      await recordingSessions.softDeleteAllData() 
+      await recordingSessions.softDeleteAllData()
     }
     app.quit();
   }
@@ -154,13 +151,11 @@ ipcMain.on("ping", (_event, _args) => {
 
 // startRecord: (isDataExists) => ipcRenderer.send("main-window:start-record", isDataExists),
 // stopRecord: (isStoppedManually) => ipcRenderer.send("main-window:stop-record", isStoppedManually),
-// manageSettingWindow: (manage) => ipcRenderer.send("setting-window:manage", manage),
-// managePrintWindow: (manage) => ipcRenderer.send("print-window:manage", manage),
 
 ipcMain.on("main-window:start-record", async (_event, isDataExists: boolean) => {
   try {
     if (mainWindow === null) return
-    if (isDataExists) {
+    if (!isDataExists) {
       mainWindow.webContents.send('main-window:start-record-callback')
       isRecording = true
       return
@@ -201,3 +196,40 @@ ipcMain.on("main-window:stop-record", async (_event, isStoppedManually: boolean)
   isRecording = false
   recordingSessionsId = undefined
 });
+
+// manageSettingWindow: (manage) => ipcRenderer.send("setting-window:manage", manage),
+// managePrintWindow: (manage) => ipcRenderer.send("print-window:manage", manage),
+ipcMain.on('setting-window:manage', (_event, args) => {
+  if (settingWindow !== null && args == 'close') return settingWindow.close()
+  if (settingWindow) return settingWindow.focus()
+  console.log("e")
+  if (args == 'open') {
+    settingWindow = new BrowserWindow({
+      width: 640,
+      height: 480,
+      minWidth: 640,
+      minHeight: 480,
+      parent: mainWindow !== null ? mainWindow : undefined,
+      modal: true,
+      show: false,
+      webPreferences: {
+        preload: path.join(__dirname, 'setting.preload.js'),
+      },
+    });
+
+    Menu.setApplicationMenu(null);
+    if (SETTING_WINDOW_VITE_DEV_SERVER_URL) {
+      settingWindow.loadURL(SETTING_WINDOW_VITE_DEV_SERVER_URL);
+      settingWindow.webContents.openDevTools();
+    } else {
+      settingWindow.loadFile(path.join(__dirname, `../renderer/${SETTING_WINDOW_VITE_NAME}/index.html`));
+    }
+
+    settingWindow.once('ready-to-show', () => settingWindow && settingWindow.show())
+
+    settingWindow.on('closed', () => {
+      mainWindow?.webContents.send('main-window:update-config', null)
+      settingWindow = null
+    })
+  }
+})

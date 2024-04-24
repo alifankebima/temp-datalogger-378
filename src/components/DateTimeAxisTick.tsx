@@ -1,4 +1,4 @@
-import React, { ReactElement, ReactNode, SVGProps } from "react";
+import React from "react";
 
 // interface DateTimeAxisTickProps {
 //   x?: string | number;

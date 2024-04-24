@@ -27,11 +27,19 @@ const config: ForgeConfig = {
           entry: 'src/window/main/main.preload.ts',
           config: 'vite.preload.config.ts',
         },
+        {
+          entry: 'src/window/setting/setting.preload.ts',
+          config: 'vite.preload.config.ts',
+        },
       ],
       renderer: [
         {
           name: 'main_window',
           config: 'vite.mainWindow.config.ts',
+        },
+        {
+          name: 'setting_window',
+          config: 'vite.settingWindow.config.ts',
         },
       ],
     }),
