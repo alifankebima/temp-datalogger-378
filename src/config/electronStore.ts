@@ -42,6 +42,27 @@ const store = new Store<StoreSchema>({
                     default: true
                 },
             }
+        },
+        state: {
+            type: 'object',
+            properties: {
+                isRecording: {
+                    type: 'boolean',
+                    default: false
+                },
+                isStopRecordingManually: {
+                    type: 'boolean',
+                    default: false
+                },
+                recordingSessionID: {
+                    type: 'number',
+                    default: 0
+                },
+            }
+        },
+        serialportMock: {
+            type: 'boolean',
+            default: false
         }
     }
 })

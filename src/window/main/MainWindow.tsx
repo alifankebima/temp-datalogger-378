@@ -28,7 +28,7 @@ import { StoreSchema } from "../../types/electronStore";
 
 declare global {
   interface Window {
-    electronAPI: MainWindowElectronAPI;
+    electronAPImain: MainWindowElectronAPI;
   }
 }
 
@@ -36,10 +36,7 @@ const Main = () => {
   // User defined config
   const [config, setConfig] = useState<StoreSchema["config"]>();
   useEffect(() => {
-    (async () => {
-      setConfig(await window.electronAPI.getConfig());
-      console.log(await window.electronAPI.getConfig());
-    })();
+    (async () => setConfig(await window.electronAPImain.getConfig()))();
   }, []);
 
   // Graph states
@@ -67,10 +64,10 @@ const Main = () => {
 
   // User event handlers
   const handleStartRecording = () =>
-    window.electronAPI.startRecord(!!graphData.length);
+    window.electronAPImain.startRecord(!!graphData.length);
   const handleStopRecording = () => {
     setIsRecording(false);
-    window.electronAPI.stopRecord(true);
+    window.electronAPImain.stopRecord(true);
   };
   const [getDivJpeg, { ref }] = useGenerateImage<HTMLDivElement>({
     quality: 0.8,
@@ -88,15 +85,15 @@ const Main = () => {
     }
   }, []);
   const openSettingWindow = () =>
-    window.electronAPI.manageSettingWindow("open");
-  const openPrintWindow = () => window.electronAPI.managePrintWindow("open");
+    window.electronAPImain.manageSettingWindow("open");
+  const openPrintWindow = () => window.electronAPImain.managePrintWindow("open");
 
   // Run on component mount & unmount only
   useEffect(() => {
-    window.electronAPI.ping();
-    window.electronAPI.pong();
-    window.electronAPI.updateGraph((data) => setGraphData(data));
-    window.electronAPI.updateTempDisplay((data) => {
+    window.electronAPImain.ping();
+    window.electronAPImain.pong();
+    window.electronAPImain.updateGraph((data) => setGraphData(data));
+    window.electronAPImain.updateTempDisplay((data) => {
       setCurrentTemp({
         t1: data.t1,
         t2: data.t2,
@@ -122,12 +119,12 @@ const Main = () => {
         t4: commonHelper.calcMax(prev.t4, data.t4 ?? prev.t4),
       }));
     });
-    window.electronAPI.updateConfig((data) => setConfig(data));
-    window.electronAPI.startRecordCallback(() => {
+    window.electronAPImain.updateConfig((data) => setConfig(data));
+    window.electronAPImain.startRecordCallback(() => {
       setGraphData([]);
       setIsRecording(true);
     });
-    window.electronAPI.stopRecordCallback(() => {
+    window.electronAPImain.stopRecordCallback(() => {
       setIsRecording(false);
     });
 
@@ -141,11 +138,11 @@ const Main = () => {
     // })();
 
     return () => {
-      window.electronAPI.removeUpdateGraph();
-      window.electronAPI.removeUpdateTempDisplay();
-      window.electronAPI.removeUpdateConfig();
-      window.electronAPI.removeStartRecordCallback();
-      window.electronAPI.removeStopRecordCallback();
+      window.electronAPImain.removeUpdateGraph();
+      window.electronAPImain.removeUpdateTempDisplay();
+      window.electronAPImain.removeUpdateConfig();
+      window.electronAPImain.removeStartRecordCallback();
+      window.electronAPImain.removeStopRecordCallback();
     };
   }, []);
 

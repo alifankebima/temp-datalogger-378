@@ -8,5 +8,11 @@ export interface StoreSchema {
         t2monitor: boolean;
         t3monitor: boolean;
         t4monitor: boolean;
-    }
+    },
+    state: {
+        isRecording: boolean,
+        isStopRecordingManually: boolean,
+        recordingSessionID: number
+    },
+    serialportMock: boolean
 }

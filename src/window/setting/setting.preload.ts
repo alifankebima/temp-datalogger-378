@@ -1,11 +1,12 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { SettingWindowElectronAPI } from "../../types/settingWindow";
 
-const electronAPI2: SettingWindowElectronAPI = {
+const electronAPISetting: SettingWindowElectronAPI = {
     getConfig: () => ipcRenderer.invoke('electron-store:get', 'config'),
     // startRecord: (isDataExists) => ipcRenderer.send("main-window:start-record", isDataExists),
     // stopRecord: (isStoppedManually) => ipcRenderer.send("main-window:stop-record", isStoppedManually),
     manageSettingWindow: (manage) => ipcRenderer.send("setting-window:manage", manage),
+    updateConfig: (configData) => ipcRenderer.send("setting-window:update-config", configData),
     // managePrintWindow: (manage) => ipcRenderer.send("print-window:manage", manage),
     // updateGraph: (callback) => ipcRenderer.on("main-window:update-graph", (_event, data: GraphData[]) => callback(data)),
     // removeUpdateGraph: () => ipcRenderer.removeAllListeners("main-window:update-graph"),
@@ -26,4 +27,4 @@ const electronAPI2: SettingWindowElectronAPI = {
     pong: () => ipcRenderer.on('pong', (_event, _data) => console.log('pong'))
 }
 
-contextBridge.exposeInMainWorld('electronAPI', electronAPI2);
+contextBridge.exposeInMainWorld('electronAPISetting', electronAPISetting);

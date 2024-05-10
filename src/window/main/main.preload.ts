@@ -12,7 +12,7 @@ const electronAPI: MainWindowElectronAPI = {
     updateTempDisplay: (callback) => ipcRenderer.on("main-window:update-temp-display", (_event, data) => callback(data)),
     removeUpdateTempDisplay: () => ipcRenderer.removeAllListeners("main-window:update-temp-display"),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    updateConfig: () => ipcRenderer.on("main-window:update-config", (_event, _data) => ipcRenderer.invoke('electron-store:get', 'config')),
+    updateConfig: (callback) => ipcRenderer.on("main-window:update-config", (_event, data) => callback(data)),
     removeUpdateConfig: () => ipcRenderer.removeAllListeners("main-window:update-config"),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     startRecordCallback: (callback) => ipcRenderer.on("main-window:start-record-callback", (_event, _data) => callback()),
@@ -26,4 +26,4 @@ const electronAPI: MainWindowElectronAPI = {
     pong: () => ipcRenderer.on('pong', (_event, _data) => console.log('pong'))
 }
 
-contextBridge.exposeInMainWorld('electronAPI', electronAPI);
+contextBridge.exposeInMainWorld('electronAPImain', electronAPI);

@@ -1,61 +1,46 @@
-import React, { useState } from 'react'
-import PropTypes from "prop-types";
+import React, { useEffect, useState } from "react";
+
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
-import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 
-import { StoreSchema } from '../../types/electronStore';
-import { SettingWindowElectronAPI } from '../../types/settingWindow';
+import CustomTabPanel from "../../components/CustomTabPanel";
+
+import {
+  SettingWindowElectronAPI,
+  graphSettingForm,
+} from "../../types/settingWindow";
 
 declare global {
   interface Window {
-    electronAPI2: SettingWindowElectronAPI;
+    electronAPISetting: SettingWindowElectronAPI;
   }
-}
-
-const CustomTabPanel = (props) => {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-}
-
-CustomTabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
-};
-
-const a11yProps = (index: number) => {
-  return {
-    id: `simple-tab-${index}`,
-    "aria-controls": `simple-tabpanel-${index}`,
-  };
 }
 
 const SettingWindow = () => {
   const [value, setValue] = React.useState(0);
-  const [config, setConfig] = useState<StoreSchema["config"]>();
+  const [config, setConfig] = useState<graphSettingForm>({
+    title: "",
+    subtitle: "",
+  });
+
+  useEffect(() => {
+    (async () => {
+      const result = await window.electronAPISetting.getConfig();
+      setConfig({
+        title: result.title ?? "",
+        subtitle: result.subtitle ?? "",
+      });
+      console.log(result);
+    })();
+  }, []);
 
   const handleChangeTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig((prevState) => ({
       ...prevState,
       [e.target.name]: e.target.value,
     }));
+    console.log(config);
   };
 
   const handleChangeSubtitle = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -65,21 +50,16 @@ const SettingWindow = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleApplySetting = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    store.set({
-      config: {
-        title: config?.title,
-        subtitle: config?.subtitle,
-      },
-    });
-    window.electronAPI2.manageSettingWindow('close');
+    window.electronAPISetting.updateConfig(config);
+    window.electronAPISetting.manageSettingWindow("close");
   };
 
   const closeSettingWindow = () => {
-    window.electronAPI2.manageSettingWindow('close');
+    window.electronAPISetting.manageSettingWindow("close");
   };
-  const handleTabs = (event, newValue) => {
+  const handleTabs = (_event: unknown, newValue: number) => {
     setValue(newValue);
   };
 
@@ -87,33 +67,39 @@ const SettingWindow = () => {
     <Box sx={{ width: "100%" }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={value} onChange={handleTabs}>
-          <Tab label="Grafik" {...a11yProps(0)} />
-          {/* <Tab label="Notifikasi" {...a11yProps(1)} /> */}
+          <Tab label="Grafik" />
+          {/* <Tab label="Notifikasi" /> */}
         </Tabs>
       </Box>
       <CustomTabPanel value={value} index={0}>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleApplySetting}>
           <div>
-            <label htmlFor="title" className="block mb-2 text-sm font-medium me-4">
+            <label
+              htmlFor="title"
+              className="block mb-2 text-sm font-medium me-4"
+            >
               Judul
             </label>
             <input
               type="text"
               name="title"
               onChange={handleChangeTitle}
-              value={config?.title}
+              value={config.title}
               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
             />
           </div>
           <div className="mt-4">
-            <label htmlFor="subtitle" className="block mb-2 text-sm font-medium">
+            <label
+              htmlFor="subtitle"
+              className="block mb-2 text-sm font-medium"
+            >
               Subjudul
             </label>
             <textarea
               id="subtitle"
               name="subtitle"
               onChange={handleChangeSubtitle}
-              value={config?.subtitle}
+              value={config.subtitle}
               rows={3}
               className="block p-2.5 w-full text-sm  bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 resize-none"
             ></textarea>
@@ -139,7 +125,7 @@ const SettingWindow = () => {
         Notifikasi
       </CustomTabPanel> */}
     </Box>
-  )
-}
+  );
+};
 
-export default SettingWindow
+export default SettingWindow;

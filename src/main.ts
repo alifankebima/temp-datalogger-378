@@ -1,30 +1,25 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
+import { ByteLengthParser } from 'serialport';
 import path from 'path';
-import store from './config/electronStore';
-import tempData from './model/tempData';
+
+import recordingSessions from './model/recordingSessions';
+import serialCommand from './helper/serialCommand';
 import commonHelper from './helper/commonHelper';
 import serialport from './config/serialport';
-import { ByteLengthParser } from 'serialport';
-import serialCommand from './helper/serialCommand';
+import store from './config/electronStore';
+import tempData from './model/tempData';
+
 import { Temps } from './types/mainWindow';
-import recordingSessions from './model/recordingSessions';
+import { graphSettingForm } from './types/settingWindow';
+import customMenuTemplate from './config/menu';
 
 let mainWindow: BrowserWindow | null = null;
 let settingWindow: BrowserWindow | null = null;
-let isRecording = false;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let isStopRecordManually = false
-let recordingSessionsId: number | undefined;
 
-// let PreviewWindow: BrowserWindow | null = null;
+if (require('electron-squirrel-startup')) app.quit();
+Menu.setApplicationMenu(Menu.buildFromTemplate(customMenuTemplate()));
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
-  app.quit();
-}
-
-const createWindow = () => {
-  // Create the browser window.
+const createMainWindow = () => {
   mainWindow = new BrowserWindow({
     minWidth: 800,
     minHeight: 600,
@@ -35,8 +30,6 @@ const createWindow = () => {
     },
   });
 
-  Menu.setApplicationMenu(null);
-  // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
@@ -50,10 +43,20 @@ const createWindow = () => {
 // explicitly with Cmd + Q.
 app.on('window-all-closed', async () => {
   if (process.platform !== 'darwin') {
-    if (isStopRecordManually) {
+    // Cleanup
+    if (store.get('store.isStopRecordManually')) {
       await tempData.softDeleteAllData()
       await recordingSessions.softDeleteAllData()
     }
+
+    ipcMain.removeAllListeners('main-window:console-log')
+    ipcMain.removeAllListeners('main-window:start-record')
+    ipcMain.removeAllListeners('main-window:stop-record')
+    ipcMain.removeAllListeners('setting-window:console-log')
+    ipcMain.removeAllListeners('setting-window:manage')
+    ipcMain.removeAllListeners('electron-store:set')
+    ipcMain.removeHandler('electron-store:get')
+
     app.quit();
   }
 });
@@ -62,7 +65,7 @@ app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    createMainWindow();
   }
 });
 
@@ -84,7 +87,6 @@ const initSerialDevice = async (): Promise<void> => {
 
   port.on('error', commonHelper.handleError);
 
-
   port.on('open', () => {
     console.log('Device connected');
     serialCommand.data.sendOnce(port);
@@ -102,13 +104,13 @@ const initSerialDevice = async (): Promise<void> => {
     }
     mainWindow?.webContents.send('main-window:update-temp-display', defaultTemps)
     mainWindow?.webContents.send('main-window:stop-record-callback')
-    isRecording = false
-    recordingSessionsId = undefined
+    store.set('state.isRecording', false)
+    store.set('state.recordingSessionID', 0)
     initSerialDevice()
   });
 
   parser.on('data', async (chunks: number[]) => {
-    if (!isRecording || recordingSessionsId === undefined) return
+    if (!store.get('state.isRecording') || store.get('state.recordingSessionID')) return
 
     const parsedTemp: Temps<number | undefined> = {
       t1: commonHelper.parseTemp(chunks[3], chunks[4]),
@@ -117,10 +119,10 @@ const initSerialDevice = async (): Promise<void> => {
       t4: commonHelper.parseTemp(chunks[9], chunks[10]),
     }
     await tempData.insertData({
-      recording_sessions_id: recordingSessionsId,
+      recording_sessions_id: store.get('state.recordingSessionID'),
       ...parsedTemp
     })
-    const fetchGraphData = await tempData.fetchDownsampledData(recordingSessionsId);
+    const fetchGraphData = await tempData.fetchDownsampledData(store.get('state.recordingSessionID'));
     mainWindow?.webContents.send('main-window:update-graph', fetchGraphData);
     mainWindow?.webContents.send('main-window:update-temp-display', parsedTemp)
   })
@@ -130,34 +132,27 @@ const initSerialDevice = async (): Promise<void> => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
-  createWindow()
+  createMainWindow()
   initSerialDevice()
+  store.onDidChange('serialportMock', (newValue, _oldValue) => {
+    console.log("test" + newValue)
+    mainWindow?.setMenu(Menu.buildFromTemplate(customMenuTemplate()))
+  });
 });
 
-ipcMain.on('main-window', async (event, data: string) => {
-  console.log(data)
-})
+// -------------------- Ipc communications --------------------
+ipcMain.on('main-window:console-log', async (_event, data: unknown) => console.log(data))
+ipcMain.on('setting-window:console-log', async (_event, data: unknown) => console.log(data))
 
-// electron-store
-ipcMain.handle('electron-store:get', (event, key: string) => {
-  return store.get(key)
-});
-
-// debug
-ipcMain.on("ping", (_event, _args) => {
-  console.log('ping')
-  mainWindow?.webContents.send('pong', (_args))
-});
-
-// startRecord: (isDataExists) => ipcRenderer.send("main-window:start-record", isDataExists),
-// stopRecord: (isStoppedManually) => ipcRenderer.send("main-window:stop-record", isStoppedManually),
+ipcMain.handle('electron-store:get', (_event, key: string) => store.get(key))
+ipcMain.on('electron-store:set', (_event, { key, value }) => store.set(key, value))
 
 ipcMain.on("main-window:start-record", async (_event, isDataExists: boolean) => {
   try {
     if (mainWindow === null) return
     if (!isDataExists) {
       mainWindow.webContents.send('main-window:start-record-callback')
-      isRecording = true
+      store.set('state.isRecording', true)
       return
     }
 
@@ -178,13 +173,13 @@ ipcMain.on("main-window:start-record", async (_event, isDataExists: boolean) => 
     }
     if (userResponse.response === 1 || userResponse.response === 0) {
       mainWindow.webContents.send('main-window:start-record-callback')
-      isRecording = true
+      store.set('state.isRecording', true)
       await recordingSessions.insertData({
         graph_title: store.get('config.title'),
         graph_subtitle: store.get('config.subtitle')
       })
       const result = await recordingSessions.fetchLastData();
-      recordingSessionsId = result?.id
+      store.set('state.recordingSessionID', result?.id ?? 0)
     }
   } catch (error) {
     commonHelper.handleError(error)
@@ -192,18 +187,20 @@ ipcMain.on("main-window:start-record", async (_event, isDataExists: boolean) => 
 });
 
 ipcMain.on("main-window:stop-record", async (_event, isStoppedManually: boolean) => {
-  isStopRecordManually = isStoppedManually
-  isRecording = false
-  recordingSessionsId = undefined
+  store.set('state.isStopRecordingManually', isStoppedManually)
+  store.set('state.isRecording', false)
+  store.set('state.recordingSessionID', 0)
 });
 
-// manageSettingWindow: (manage) => ipcRenderer.send("setting-window:manage", manage),
-// managePrintWindow: (manage) => ipcRenderer.send("print-window:manage", manage),
 ipcMain.on('setting-window:manage', (_event, args) => {
-  if (settingWindow !== null && args == 'close') return settingWindow.close()
+  if (settingWindow !== null && args == 'close') {
+    mainWindow?.webContents.send('main-window:update-config', store.get('config'))
+    return settingWindow.close()
+  }
+
   if (settingWindow) return settingWindow.focus()
-  console.log("e")
-  if (args == 'open') {
+
+  if (args === 'open') {
     settingWindow = new BrowserWindow({
       width: 640,
       height: 480,
@@ -217,7 +214,7 @@ ipcMain.on('setting-window:manage', (_event, args) => {
       },
     });
 
-    Menu.setApplicationMenu(null);
+    settingWindow.setMenu(null)
     if (SETTING_WINDOW_VITE_DEV_SERVER_URL) {
       settingWindow.loadURL(SETTING_WINDOW_VITE_DEV_SERVER_URL);
       settingWindow.webContents.openDevTools();
@@ -228,8 +225,13 @@ ipcMain.on('setting-window:manage', (_event, args) => {
     settingWindow.once('ready-to-show', () => settingWindow && settingWindow.show())
 
     settingWindow.on('closed', () => {
-      mainWindow?.webContents.send('main-window:update-config', null)
       settingWindow = null
     })
   }
+})
+
+ipcMain.on('setting-window:update-config', (_event, newConfigData: graphSettingForm) => {
+  store.set('config.title', newConfigData.title)
+  store.set('config.subtitle', newConfigData.subtitle)
+  mainWindow?.webContents.send('main-window:update-config', store.get('config'))
 })
