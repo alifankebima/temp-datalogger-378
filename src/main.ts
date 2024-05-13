@@ -1,22 +1,32 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
-import { ByteLengthParser } from 'serialport';
+import { ByteLengthParser, SerialPort } from 'serialport';
+import { MockBindingInterface } from '@serialport/binding-mock';
+import { SerialPortStream } from '@serialport/stream';
+import dotenv from 'dotenv';
 import path from 'path';
 
 import recordingSessions from './model/recordingSessions';
+import { graphSettingForm } from './types/settingWindow';
 import serialCommand from './helper/serialCommand';
 import commonHelper from './helper/commonHelper';
+import customMenuTemplate from './config/menu';
 import serialport from './config/serialport';
+import serialmock from './config/serialmock';
 import store from './config/electronStore';
+import { Temps } from './types/mainWindow';
+import mockTemp from './helper/mockTemp';
 import tempData from './model/tempData';
 
-import { Temps } from './types/mainWindow';
-import { graphSettingForm } from './types/settingWindow';
-import customMenuTemplate from './config/menu';
+dotenv.config()
 
 let mainWindow: BrowserWindow | null = null;
 let settingWindow: BrowserWindow | null = null;
+let port: SerialPort | SerialPortStream<MockBindingInterface> | null = null;
+const isMockPort: boolean = !!process.env.SERIALMOCK
+let count: number = 0;
 
 if (require('electron-squirrel-startup')) app.quit();
+
 Menu.setApplicationMenu(Menu.buildFromTemplate(customMenuTemplate()));
 
 const createMainWindow = () => {
@@ -42,23 +52,23 @@ const createMainWindow = () => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', async () => {
-  if (process.platform !== 'darwin') {
-    // Cleanup
-    if (store.get('store.isStopRecordManually')) {
-      await tempData.softDeleteAllData()
-      await recordingSessions.softDeleteAllData()
-    }
+  if (process.platform === 'darwin') return
 
-    ipcMain.removeAllListeners('main-window:console-log')
-    ipcMain.removeAllListeners('main-window:start-record')
-    ipcMain.removeAllListeners('main-window:stop-record')
-    ipcMain.removeAllListeners('setting-window:console-log')
-    ipcMain.removeAllListeners('setting-window:manage')
-    ipcMain.removeAllListeners('electron-store:set')
-    ipcMain.removeHandler('electron-store:get')
-
-    app.quit();
+  // Cleanup
+  if (store.get('store.isStopRecordManually')) {
+    await tempData.softDeleteAllData()
+    await recordingSessions.softDeleteAllData()
   }
+
+  ipcMain.removeAllListeners('main-window:console-log')
+  ipcMain.removeAllListeners('main-window:start-record')
+  ipcMain.removeAllListeners('main-window:stop-record')
+  ipcMain.removeAllListeners('setting-window:console-log')
+  ipcMain.removeAllListeners('setting-window:manage')
+  ipcMain.removeAllListeners('electron-store:set')
+  ipcMain.removeHandler('electron-store:get')
+
+  app.quit();
 });
 
 app.on('activate', () => {
@@ -73,10 +83,13 @@ app.on('activate', () => {
 // code. You can also put them in separate files and import them here.
 
 // Handle serial device auto reconnect and communication
-const initSerialDevice = async (): Promise<void> => {
-  const port = await serialport()
-  if (!port) {
-    setTimeout(initSerialDevice, 1500)
+const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
+  port?.close()
+
+  port = isMockPort ? await serialmock() : await serialport()
+
+  if (port === null) {
+    !port && setTimeout(initSerialDevice, 1500)
     return
   }
 
@@ -89,8 +102,18 @@ const initSerialDevice = async (): Promise<void> => {
 
   port.on('open', () => {
     console.log('Device connected');
-    serialCommand.data.sendOnce(port);
-    writeIntvId = setInterval(() => serialCommand.data.sendOnce(port), 1500)
+    if (isMockPort) {
+      writeIntvId = setInterval(() => {
+        (port as SerialPortStream<MockBindingInterface>).port?.emitData(
+          Buffer.from('000000' + mockTemp(count).join('').repeat(4) + '000000000000000000000000000000000000000000000000', 'hex')
+        )
+        console.log(count)
+        count++
+      }, 2000)
+    } else {
+      port && serialCommand.data.sendOnce(port as SerialPort);
+      writeIntvId = setInterval(() => port && serialCommand.data.sendOnce(port as SerialPort), 1500)
+    }
   })
 
   port.on('close', () => {
@@ -106,11 +129,11 @@ const initSerialDevice = async (): Promise<void> => {
     mainWindow?.webContents.send('main-window:stop-record-callback')
     store.set('state.isRecording', false)
     store.set('state.recordingSessionID', 0)
-    initSerialDevice()
+    initSerialDevice(isMockPort)
   });
 
   parser.on('data', async (chunks: number[]) => {
-    if (!store.get('state.isRecording') || store.get('state.recordingSessionID')) return
+    console.log(chunks)
 
     const parsedTemp: Temps<number | undefined> = {
       t1: commonHelper.parseTemp(chunks[3], chunks[4]),
@@ -118,26 +141,23 @@ const initSerialDevice = async (): Promise<void> => {
       t3: commonHelper.parseTemp(chunks[7], chunks[8]),
       t4: commonHelper.parseTemp(chunks[9], chunks[10]),
     }
+
+    mainWindow?.webContents.send('main-window:update-temp-display', parsedTemp)
+
+    if (!store.get('state.isRecording') || store.get('state.recordingSessionID')) return
     await tempData.insertData({
       recording_sessions_id: store.get('state.recordingSessionID'),
       ...parsedTemp
     })
     const fetchGraphData = await tempData.fetchDownsampledData(store.get('state.recordingSessionID'));
     mainWindow?.webContents.send('main-window:update-graph', fetchGraphData);
-    mainWindow?.webContents.send('main-window:update-temp-display', parsedTemp)
   })
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.on('ready', () => {
+  console.log(store.get('config'))
   createMainWindow()
-  initSerialDevice()
-  store.onDidChange('serialportMock', (newValue, _oldValue) => {
-    console.log("test" + newValue)
-    mainWindow?.setMenu(Menu.buildFromTemplate(customMenuTemplate()))
-  });
+  initSerialDevice(isMockPort)
 });
 
 // -------------------- Ipc communications --------------------

@@ -1,5 +1,4 @@
 import { MenuItemConstructorOptions } from 'electron';
-import store from './electronStore';
 
 const customMenuTemplate = (): MenuItemConstructorOptions[] => {
   return [
@@ -19,17 +18,6 @@ const customMenuTemplate = (): MenuItemConstructorOptions[] => {
       submenu: [
         { role: 'reload' },
         { role: 'forceReload' },
-        { type: 'separator' },
-        {
-          label: 'Start Mock Serialport',
-          click: () => store.set('serialportMock', true),
-          enabled: !store.get('serialportMock')
-        },
-        {
-          label: 'Stop Mock Serialport',
-          click: () => store.set('serialportMock', false),
-          enabled: store.get('serialportMock')
-        }
       ]
     }
   ]
