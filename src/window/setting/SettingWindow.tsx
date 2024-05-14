@@ -31,7 +31,6 @@ const SettingWindow = () => {
         title: result.title ?? "",
         subtitle: result.subtitle ?? "",
       });
-      console.log(result);
     })();
   }, []);
 
@@ -40,7 +39,6 @@ const SettingWindow = () => {
       ...prevState,
       [e.target.name]: e.target.value,
     }));
-    console.log(config);
   };
 
   const handleChangeSubtitle = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

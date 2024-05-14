@@ -52,14 +52,14 @@ const createMainWindow = () => {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', async () => {
+app.on('window-all-closed', () => {
   if (process.platform === 'darwin') return
 
   // Cleanup
   if (store.get('store.isStopRecordManually')) {
     try {
-      await tempData.softDeleteAllData()
-      await recordingSessions.softDeleteAllData()
+      tempData.softDeleteAllData()
+      recordingSessions.softDeleteAllData()
     } catch (error) {
       console.error(error)
     }
@@ -206,7 +206,7 @@ ipcMain.on("main-window:start-record", async (_event, isDataExists: boolean) => 
     if (userResponse === 0) await tempData.softDeleteAllData()
 
     if (userResponse === 0 || userResponse === 1 || !isDataExists) {
-      mainWindow.webContents.send('main-window:start-record-callback', userResponse)
+      mainWindow.webContents.send('main-window:start-record-callback', userResponse === 1)
       store.set('state.isRecording', true)
 
       if (userResponse === 0 || !isDataExists) {
