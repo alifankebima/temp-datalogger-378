@@ -67,4 +67,11 @@ const store = new Store<StoreSchema>({
     }
 })
 
+store.set('state', {
+    isRecording:false,
+    isStopRecordingManually: false,
+})
+
+console.log('electron-store dipanggil');
+
 export default store;

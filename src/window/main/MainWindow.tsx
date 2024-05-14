@@ -120,8 +120,8 @@ const Main = () => {
       }));
     });
     window.electronAPImain.updateConfig((data) => setConfig(data));
-    window.electronAPImain.startRecordCallback(() => {
-      setGraphData([]);
+    window.electronAPImain.startRecordCallback((isContinueRecord) => {
+      if(!isContinueRecord) setGraphData([]);
       setIsRecording(true);
     });
     window.electronAPImain.stopRecordCallback(() => {
@@ -149,13 +149,13 @@ const Main = () => {
   return (
     <div className="h-screen flex flex-col">
       <div className="bg-gray-100 border-b border-gray-400 flex px-2 py-1">
-        <NavbarButton onClick={handleStartRecording}>
+        <NavbarButton onClick={handleStartRecording} disabled={isRecording}>
           <PiRecordFill
             className={`${
               !isRecording ? "text-red-500" : "text-gray-300"
             } text-4xl`}
           />
-          <div className="text-sm">Rekam</div>
+          <div className={`text-sm`}>Rekam</div>
         </NavbarButton>
 
         <NavbarButton onClick={handleStopRecording} disabled={!isRecording}>
@@ -178,7 +178,7 @@ const Main = () => {
           <div className="text-sm">Simpan</div>
         </NavbarButton>
 
-        <NavbarButton onClick={openPrintWindow}>
+        <NavbarButton onClick={openPrintWindow} disabled={!graphData.length}>
           <IoMdPrint
             className={`${
               graphData.length ? "text-indigo-900" : "text-gray-300"
@@ -260,7 +260,7 @@ const Main = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   xAxisId={0}
-                  dataKey="timestamp"
+                  dataKey="created_at"
                   height={20}
                   interval={"preserveStartEnd"}
                   tick={dateTimeAxisTick}

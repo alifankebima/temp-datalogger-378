@@ -16,6 +16,7 @@ import store from './config/electronStore';
 import { Temps } from './types/mainWindow';
 import mockTemp from './helper/mockTemp';
 import tempData from './model/tempData';
+import db from './config/sqlite';
 
 dotenv.config()
 
@@ -56,9 +57,15 @@ app.on('window-all-closed', async () => {
 
   // Cleanup
   if (store.get('store.isStopRecordManually')) {
-    await tempData.softDeleteAllData()
-    await recordingSessions.softDeleteAllData()
+    try {
+      await tempData.softDeleteAllData()
+      await recordingSessions.softDeleteAllData()
+    } catch (error) {
+      console.error(error)
+    }
   }
+
+  db.close((error) => error ? console.log("Database closed") : console.error("e"))
 
   ipcMain.removeAllListeners('main-window:console-log')
   ipcMain.removeAllListeners('main-window:start-record')
@@ -107,9 +114,8 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
         (port as SerialPortStream<MockBindingInterface>).port?.emitData(
           Buffer.from('000000' + mockTemp(count).join('').repeat(4) + '000000000000000000000000000000000000000000000000', 'hex')
         )
-        console.log(count)
         count++
-      }, 2000)
+      }, 1000)
     } else {
       port && serialCommand.data.sendOnce(port as SerialPort);
       writeIntvId = setInterval(() => port && serialCommand.data.sendOnce(port as SerialPort), 1500)
@@ -133,8 +139,6 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
   });
 
   parser.on('data', async (chunks: number[]) => {
-    console.log(chunks)
-
     const parsedTemp: Temps<number | undefined> = {
       t1: commonHelper.parseTemp(chunks[3], chunks[4]),
       t2: commonHelper.parseTemp(chunks[5], chunks[6]),
@@ -144,18 +148,26 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
 
     mainWindow?.webContents.send('main-window:update-temp-display', parsedTemp)
 
-    if (!store.get('state.isRecording') || store.get('state.recordingSessionID')) return
-    await tempData.insertData({
-      recording_sessions_id: store.get('state.recordingSessionID'),
-      ...parsedTemp
-    })
-    const fetchGraphData = await tempData.fetchDownsampledData(store.get('state.recordingSessionID'));
-    mainWindow?.webContents.send('main-window:update-graph', fetchGraphData);
+    try {
+      const recordingSessionID = parseInt(store.get('state.recordingSessionID') ?? 0)
+      if (!store.get('state.isRecording') || !recordingSessionID) return
+
+      await tempData.insertData({
+        recording_sessions_id: recordingSessionID,
+        ...parsedTemp
+      })
+
+      const fetchGraphData = await tempData.fetchDownsampledData(recordingSessionID);
+      console.log(fetchGraphData)
+      mainWindow?.webContents.send('main-window:update-graph', fetchGraphData);
+    } catch (error) {
+      console.error(error)
+    }
   })
 }
 
 app.on('ready', () => {
-  console.log(store.get('config'))
+  console.log(store.get('state'))
   createMainWindow()
   initSerialDevice(isMockPort)
 });
@@ -169,37 +181,46 @@ ipcMain.on('electron-store:set', (_event, { key, value }) => store.set(key, valu
 
 ipcMain.on("main-window:start-record", async (_event, isDataExists: boolean) => {
   try {
+    let userResponse: number | null = null
+
     if (mainWindow === null) return
-    if (!isDataExists) {
-      mainWindow.webContents.send('main-window:start-record-callback')
-      store.set('state.isRecording', true)
-      return
-    }
-
-    const userResponse = await dialog.showMessageBox(mainWindow, {
-      'type': 'question',
-      'title': 'Confirmation',
-      'message': "Apakah Anda yakin ingin memulai rekaman?",
-      'buttons': [
-        'Hapus data dan mulai rekaman',
-        'Lanjut merekam data',
-        'Tidak'
-      ]
-    })
-
-    if (userResponse.response === 2) return
-    if (userResponse.response === 0) {
-      await tempData.softDeleteAllData()
-    }
-    if (userResponse.response === 1 || userResponse.response === 0) {
-      mainWindow.webContents.send('main-window:start-record-callback')
-      store.set('state.isRecording', true)
-      await recordingSessions.insertData({
-        graph_title: store.get('config.title'),
-        graph_subtitle: store.get('config.subtitle')
+    if (isDataExists) {
+      // mainWindow.webContents.send('main-window:start-record-callback')
+      // store.set('state.isRecording', true)
+      const messageBox = await dialog.showMessageBox(mainWindow, {
+        'type': 'question',
+        'title': 'Confirmation',
+        'message': "Apakah Anda yakin ingin memulai rekaman?",
+        'buttons': [
+          'Hapus data dan mulai rekaman',
+          'Lanjut merekam data',
+          'Tidak'
+        ]
       })
+      userResponse = messageBox.response
+    }
+
+    console.log('user response' + userResponse)
+
+    if (userResponse === 2) return
+    if (userResponse === 0) await tempData.softDeleteAllData()
+
+    if (userResponse === 0 || userResponse === 1 || !isDataExists) {
+      mainWindow.webContents.send('main-window:start-record-callback', userResponse)
+      store.set('state.isRecording', true)
+
+      if (userResponse === 0 || !isDataExists) {
+        await recordingSessions.insertData({
+          graph_title: store.get('config.title'),
+          graph_subtitle: store.get('config.subtitle')
+        })
+      }
+
       const result = await recordingSessions.fetchLastData();
+      console.log(result)
+
       store.set('state.recordingSessionID', result?.id ?? 0)
+      console.log('recording session ' + store.get('state.recordingSessionID'))
     }
   } catch (error) {
     commonHelper.handleError(error)

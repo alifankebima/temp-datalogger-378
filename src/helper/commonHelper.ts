@@ -28,8 +28,10 @@ const calcMax = (firstNum: number | null | undefined, secondNum: number | null |
 }
 
 const formatDate = (timestamp: number): string => {
+    if(!timestamp) return ""
     const date = new Date(timestamp)
     const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu']
+    
     return hari[date.getDay()] + " " + new Intl.DateTimeFormat('id-ID', {
         day: '2-digit',
         month: '2-digit',
@@ -41,7 +43,7 @@ const formatDate = (timestamp: number): string => {
 }
 
 const handleError = (error: Error | unknown): void =>
-    console.error(error);
+    error ? console.error(error) : undefined;
 
 const isNotNullOrUndefined = (value: unknown): boolean => {
     if(value !== null && value !== undefined) return true

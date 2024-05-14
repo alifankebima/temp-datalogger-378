@@ -23,7 +23,7 @@ export interface MainWindowElectronAPI {
     removeUpdateTempDisplay: () => void;
     updateConfig: (callback: (data:StoreSchema['config']) => void) => void;
     removeUpdateConfig: () => void;
-    startRecordCallback: (callback: () => void) => void;
+    startRecordCallback: (callback: (isContinueRecord: boolean) => void) => void;
     removeStartRecordCallback: () => void;
     stopRecordCallback: (callback: () => void) => void;
     removeStopRecordCallback: () => void;

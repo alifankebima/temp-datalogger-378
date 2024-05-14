@@ -24,9 +24,9 @@ const DateTimeAxisTick = ({ x, y, payload, showDate }: CustomTickProps) => {
   let formattedTime: string;
 
   if (showDate) {
-    formattedTime = date.toLocaleDateString();
+    formattedTime = payload?.value ? date.toLocaleDateString() : "";
   } else {
-    formattedTime = date.toLocaleTimeString();
+    formattedTime = payload?.value ? date.toLocaleTimeString().split(".").join(":") : "";
   }
 
   return (

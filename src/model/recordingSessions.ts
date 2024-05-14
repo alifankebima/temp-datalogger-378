@@ -1,4 +1,4 @@
-import sqlite from '../config/sqlite'
+import db from '../config/sqlite'
 
 interface InsertData {
     graph_title?: string,
@@ -21,22 +21,22 @@ interface SelectData extends UpdateData {
 }
 
 const fetchLastData = () => {
-    return new Promise<SelectData | null | undefined>((resolve, reject) => {
-        sqlite.fetchAll<SelectData>(`
-        SELECT 
+    return new Promise<SelectData | undefined>((resolve, reject) => {
+        db.get<SelectData>(
+            `SELECT 
             id, graph_title, graph_subtitle, start_date, end_date, 
             product_type_wood, product_type_pallet, qty_pcs, qty_m3, 
             created_at, updated_at 
         FROM recording_sessions 
         WHERE deleted_at IS NULL 
         ORDER BY created_at DESC 
-        LIMIT 1;`)
-        .then(result => resolve(result.length ? result[0] : null))
-        .catch(error => reject(error));
+        LIMIT 1;`,
+            (error, row) => error ? reject(error) : resolve(row)
+        )
     })
 }
 
-const insertData = (data: InsertData): Promise<boolean> => {
+const insertData = (data: InsertData) => {
     const created_at = new Date().getTime()
     const values = [
         data.graph_title || null,
@@ -49,12 +49,18 @@ const insertData = (data: InsertData): Promise<boolean> => {
         created_at
     ]
 
-    return sqlite.executeQuery(`
-        INSERT INTO recording_sessions(
-            graph_title, graph_subtitle, start_date, product_type_wood, 
-            product_type_pallet, qty_pcs, qty_m3, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`, values
-    ) as Promise<boolean>;
+    return new Promise((resolve, reject) => {
+        db.run(
+            `INSERT INTO recording_sessions(
+                graph_title, graph_subtitle, start_date, product_type_wood, 
+                product_type_pallet, qty_pcs, qty_m3, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+            values,
+            function (error) {
+                error ? reject(error) : resolve(this.changes)
+            }
+        )
+    })
 }
 
 const updateData = (data: UpdateData) => {
@@ -71,32 +77,51 @@ const updateData = (data: UpdateData) => {
         data.id
     ].filter(Boolean) as (string | number)[]
 
-    return sqlite.executeQuery(`
-        UPDATE recording_sessions SET 
-            ${data.graph_title && "graph_title='?', "}
-            ${data.graph_subtitle && "graph_subtitle='?', "}
-            ${data.end_date && "end_date=?, "}
-            ${data.product_type_wood && "product_type_wood='?', "}
-            ${data.product_type_pallet && "product_type_pallet='?', "}
-            ${data.qty_pcs && "qty_pcs=?, "}
-            ${data.qty_m3 && "qty_m3=?, "}
-            updated_at=? 
-        WHERE id=? AND deleted_at IS NULL;`, values
-    );
+    return new Promise((resolve, reject) => {
+        db.run(
+            `UPDATE recording_sessions SET 
+                ${data.graph_title && "graph_title='?', "}
+                ${data.graph_subtitle && "graph_subtitle='?', "}
+                ${data.end_date && "end_date=?, "}
+                ${data.product_type_wood && "product_type_wood='?', "}
+                ${data.product_type_pallet && "product_type_pallet='?', "}
+                ${data.qty_pcs && "qty_pcs=?, "}
+                ${data.qty_m3 && "qty_m3=?, "}
+                updated_at=? 
+            WHERE id=? AND deleted_at IS NULL;`,
+            values,
+            function (error) {
+                error ? reject(error) : resolve(this.changes)
+            }
+        )
+    })
 }
 
 const softDeleteAllData = () => {
     const deleted_at = new Date().getTime();
 
-    return sqlite.executeQuery(`
-        UPDATE recording_sessions SET 
-            deleted_at=? 
-        WHERE deleted_at IS NULL;`, [deleted_at]
-    );
+    return new Promise((resolve, reject) => {
+        db.run(
+            `UPDATE recording_sessions SET 
+               deleted_at=? 
+            WHERE deleted_at IS NULL;`,
+            [deleted_at],
+            function (error) {
+                error ? reject(error) : resolve(this.changes)
+            }
+        )
+    })
 }
 
 const hardDeleteAllData = () => {
-    return sqlite.executeQuery('DELETE FROM recording_sessions;');
+    return new Promise((resolve, reject) => {
+        db.run(
+            `DELETE FROM recording_sessions;`,
+            function (error) {
+                error ? reject(error) : resolve(this.changes)
+            }
+        )
+    })
 }
 
 export default {

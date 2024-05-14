@@ -15,7 +15,7 @@ const electronAPI: MainWindowElectronAPI = {
     updateConfig: (callback) => ipcRenderer.on("main-window:update-config", (_event, data) => callback(data)),
     removeUpdateConfig: () => ipcRenderer.removeAllListeners("main-window:update-config"),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    startRecordCallback: (callback) => ipcRenderer.on("main-window:start-record-callback", (_event, _data) => callback()),
+    startRecordCallback: (callback) => ipcRenderer.on("main-window:start-record-callback", (_event, isContinueRecord) => callback(isContinueRecord)),
     removeStartRecordCallback: () => ipcRenderer.removeAllListeners("main-window:start-record-callback"),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     stopRecordCallback: (callback) => ipcRenderer.on("main-window:stop-record-callback", (_event, _data) => callback()),
