@@ -78,7 +78,7 @@ const Main = () => {
     if (jpeg) {
       FileSaver.saveAs(
         jpeg,
-        `${config?.subtitle} ${commonHelper.formatDate(
+        `${config?.subtitle} ${commonHelper.formatDateTime(
           new Date().getTime()
         )}.png`
       );
@@ -86,7 +86,7 @@ const Main = () => {
   }, []);
   const openSettingWindow = () =>
     window.electronAPImain.manageSettingWindow("open");
-  const openPrintWindow = () => window.electronAPImain.managePrintWindow("open");
+  const openPrintPreviewWindow = () => window.electronAPImain.managePrintPreviewWindow("open");
 
   // Run on component mount & unmount only
   useEffect(() => {
@@ -178,7 +178,7 @@ const Main = () => {
           <div className="text-sm">Simpan</div>
         </NavbarButton>
 
-        <NavbarButton onClick={openPrintWindow} disabled={!graphData.length}>
+        <NavbarButton onClick={openPrintPreviewWindow} disabled={!graphData.length}>
           <IoMdPrint
             className={`${
               graphData.length ? "text-indigo-900" : "text-gray-300"
@@ -338,7 +338,7 @@ const Main = () => {
                 )}
                 <Tooltip
                   labelFormatter={(timestamp) =>
-                    commonHelper.formatDate(timestamp)
+                    commonHelper.formatDateTime(timestamp)
                   }
                 />
                 <Legend formatter={legendGraph} />

@@ -22,6 +22,7 @@ dotenv.config()
 
 let mainWindow: BrowserWindow | null = null;
 let settingWindow: BrowserWindow | null = null;
+let printPreviewWindow: BrowserWindow | null = null;
 let port: SerialPort | SerialPortStream<MockBindingInterface> | null = null;
 const isMockPort: boolean = !!process.env.SERIALMOCK
 let count: number = 0;
@@ -239,15 +240,14 @@ ipcMain.on('setting-window:manage', (_event, args) => {
     return settingWindow.close()
   }
 
-  if (settingWindow) return settingWindow.focus()
-
   if (args === 'open') {
+    if (settingWindow) return settingWindow.focus()
     settingWindow = new BrowserWindow({
       width: 640,
       height: 480,
       minWidth: 640,
       minHeight: 480,
-      parent: mainWindow !== null ? mainWindow : undefined,
+      parent: mainWindow ?? undefined,
       modal: true,
       show: false,
       webPreferences: {
@@ -263,7 +263,7 @@ ipcMain.on('setting-window:manage', (_event, args) => {
       settingWindow.loadFile(path.join(__dirname, `../renderer/${SETTING_WINDOW_VITE_NAME}/index.html`));
     }
 
-    settingWindow.once('ready-to-show', () => settingWindow && settingWindow.show())
+    settingWindow.once('ready-to-show', () => settingWindow?.show())
 
     settingWindow.on('closed', () => {
       settingWindow = null
@@ -275,4 +275,49 @@ ipcMain.on('setting-window:update-config', (_event, newConfigData: graphSettingF
   store.set('config.title', newConfigData.title)
   store.set('config.subtitle', newConfigData.subtitle)
   mainWindow?.webContents.send('main-window:update-config', store.get('config'))
+})
+
+ipcMain.on('print-preview-window:manage', (_event, args) => {
+  if (printPreviewWindow !== null && args == 'close') {
+    return printPreviewWindow.close()
+  }
+
+  if (args === 'open') {
+    if (printPreviewWindow) return printPreviewWindow.focus()
+    printPreviewWindow = new BrowserWindow({
+      width: Math.floor(210 * 2.5),
+      height: Math.floor(297 * 2.5),
+      minWidth: 210 * 2,
+      minHeight: 297 * 2,
+      parent: mainWindow ?? undefined,
+      modal: true,
+      show: false,
+      webPreferences: {
+        preload: path.join(__dirname, 'printPreview.preload.js'),
+      },
+    })
+
+    printPreviewWindow.setMenu(null)
+    if (PRINT_PREVIEW_WINDOW_VITE_DEV_SERVER_URL) {
+      printPreviewWindow.loadURL(PRINT_PREVIEW_WINDOW_VITE_DEV_SERVER_URL);
+      printPreviewWindow.webContents.openDevTools();
+    } else {
+      printPreviewWindow.loadFile(path.join(__dirname, `../renderer/${PRINT_PREVIEW_WINDOW_VITE_NAME}/index.html`));
+    }
+
+    printPreviewWindow.once('ready-to-show', () => printPreviewWindow?.show())
+
+    printPreviewWindow.on('closed', () => {
+      printPreviewWindow = null
+    })
+  }
+
+  if (args == "print") {
+    printPreviewWindow?.webContents.print({
+      pageSize: 'A4'
+    }, (success, failure) => {
+      if (success) return console.log("Berhasil print")
+      console.error(failure)
+    })
+  }
 })

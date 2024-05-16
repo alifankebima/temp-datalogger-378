@@ -31,6 +31,10 @@ const config: ForgeConfig = {
           entry: 'src/window/setting/setting.preload.ts',
           config: 'vite.preload.config.ts',
         },
+        {
+          entry: 'src/window/printPreview/printPreview.preload.ts',
+          config: 'vite.preload.config.ts',
+        },
       ],
       renderer: [
         {
@@ -40,6 +44,10 @@ const config: ForgeConfig = {
         {
           name: 'setting_window',
           config: 'vite.settingWindow.config.ts',
+        },
+        {
+          name: 'print_preview_window',
+          config: 'vite.printPreviewWindow.config.ts',
         },
       ],
     }),

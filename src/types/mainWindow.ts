@@ -16,7 +16,7 @@ export interface MainWindowElectronAPI {
     startRecord: (isDataExists: boolean) => void;
     stopRecord: (isStoppedManually: boolean) => void;
     manageSettingWindow: (manage: "open" | "close") => void;
-    managePrintWindow: (manage: "open" | "close") => void;
+    managePrintPreviewWindow: (manage: "open" | "close") => void;
     updateGraph: (callback: (data: GraphData[]) => void) => void;
     removeUpdateGraph: () => void;
     updateTempDisplay: (callback: (data: Temps<number>) => void) => void;
