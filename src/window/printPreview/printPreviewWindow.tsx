@@ -36,9 +36,8 @@ const printPreviewWindow = () => {
         <SimpleButton>Batal</SimpleButton>
         <hr />
       </div>
-
-      <div style={{ fontFamily: "Carlito, sans-serif" }}>
-        <div className="flex justify-between m-4">
+      <div className="m-4" style={{ fontFamily: "Carlito, sans-serif" }}>
+        <div className="flex justify-between my-4">
           <div className="flex gap-2">
             <div>Logo</div>
             <div
@@ -60,7 +59,7 @@ const printPreviewWindow = () => {
         <div className="flex justify-center w-full mt-16">
           <div className="font-bold">"LAPORAN MONITORING SUHU INTI KAYU"</div>
         </div>
-        <div className="grid grid-cols-2 mt-4 gap-3 p-3">
+        <div className="grid grid-cols-2 mt-4 gap-3">
           <div className="flex">
             <div className="w-36">Tanggal Masuk</div>
             <div className="">: {metadata.entryDate}</div>
@@ -69,16 +68,20 @@ const printPreviewWindow = () => {
             <div className="w-36">Tanggal Keluar</div>
             <div className="">: {metadata.exitDate}</div>
           </div>
+          <div className="flex">
+            <div className="w-36">Jumlah</div>
+            <div className="">:</div>
+          </div>
+          <div className="flex">
+            <div className="w-36">Jenis Kayu</div>
+            <div className="">: </div>
+          </div>
           <div className="flex col-span-2">
             <div className="w-36">Lama Proses</div>
             <div className="">: {metadata.duration}</div>
           </div>
-          <div className="flex">
-            <div className="w-36">Jumlah (pcs / m3)</div>
-            <div className="">:</div>
-          </div>
         </div>
-        <div className="mx-2 mt-4">
+        <div className="mt-4">
           <table className="table-auto w-full border-collapse">
             <thead>
               <tr>

@@ -285,8 +285,8 @@ ipcMain.on('print-preview-window:manage', (_event, args) => {
   if (args === 'open') {
     if (printPreviewWindow) return printPreviewWindow.focus()
     printPreviewWindow = new BrowserWindow({
-      width: Math.floor(210 * 2.5),
-      height: Math.floor(297 * 2.5),
+      width: 620,
+      height: 700,
       minWidth: 210 * 2,
       minHeight: 297 * 2,
       parent: mainWindow ?? undefined,
