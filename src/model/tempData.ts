@@ -14,9 +14,7 @@ interface SelectData extends InsertData {
     created_at: number
 }
 
-const fetchAllData = (data: SelectData) => {
-    const { recording_sessions_id } = data;
-
+const selectAllData = (recording_sessions_id: number) => {
     return new Promise<SelectData[]>((resolve, reject) => {
         db.all<SelectData>(
             `SELECT 
@@ -30,54 +28,54 @@ const fetchAllData = (data: SelectData) => {
     })
 }
 
-const fetchDownsampledData = (recording_sessions_id: number) => {
-    const values = new Array(4).fill(recording_sessions_id);
-
+const selectBySampleSize = (recording_sessions_id: number, sampleSize: number = 100) => {
     return new Promise<GraphData[]>((resolve, reject) => {
         db.all<GraphData>(
-            `WITH total_records AS (
-                SELECT COUNT(*) AS total FROM temp_data WHERE recording_sessions_id=? 
-                AND deleted_at IS NULL
+            `WITH td AS (
+                SELECT t1, t2, t3, t4, created_at, ROW_NUMBER() OVER (ORDER BY id ASC) as rownum FROM temp_data 
+                WHERE recording_sessions_id = ? AND deleted_at IS NULL
             ),
-            earliest_and_latest AS (
-                SELECT MIN(created_at) AS earliest_time, MAX(created_at) AS latest_time
-                FROM temp_data WHERE recording_sessions_id=? AND deleted_at IS NULL
-            ),
-            sampled_data AS (
-                SELECT *, (SELECT total FROM total_records) AS total_records,
-                (SELECT COUNT(*) FROM temp_data t2 WHERE t2.recording_sessions_id=? AND 
-                t2.created_at <= t1.created_at AND t2.deleted_at IS NULL) AS row_num FROM 
-                temp_data t1 WHERE t1.recording_sessions_id=? AND t1.deleted_at IS NULL
+            total_records AS (
+                SELECT count(*) FROM td
             )
-            SELECT t1, t2, t3, t4, created_at FROM (
-                SELECT * FROM sampled_data WHERE row_num = 1
-                UNION ALL
-                SELECT * FROM sampled_data WHERE row_num = total_records
-                UNION ALL
-                SELECT * FROM sampled_data WHERE (row_num % CASE WHEN total_records > 100 
-                THEN total_records / 98 ELSE 1 END = 0) AND row_num NOT IN 
-                (1, total_records)
+            SELECT *, (SELECT * FROM total_records) AS total_records FROM td 
+            WHERE rownum = 1 OR rownum = (
+                SELECT rownum FROM td ORDER BY rownum DESC LIMIT 1
+            ) OR (
+                rownum % CASE WHEN total_records > ? THEN total_records / (? - 2) ELSE 1 END = 0
             ) ORDER BY created_at ASC;`,
-            values,
+            [recording_sessions_id, sampleSize, sampleSize],
             (error, rows) => error ? reject(error) : resolve(rows)
         )
     })
 }
 
-const fetchDataPerHour = (data: SelectData) => {
-    const { recording_sessions_id } = data;
+const selectByTimeInterval = (recording_sessions_id: number, intervalSeconds: number = 3600) => {
+    const rowThresholdMilliseconds = 900000
 
-    return new Promise<SelectData[]>((resolve, reject) => {
-        db.all<SelectData>(
-            `SELECT 
-                strftime('%Y-%m-%d %H:%M:%S', datetime(created_at/1000, 
-                'unixepoch', 'localtime')) AS interval_start, COUNT(*) AS data_count, 
-                * 
-            FROM temp_data 
-            WHERE recording_sessions_id=? AND deleted_at IS NULL 
-            GROUP BY strftime('%Y-%m-%d %H:00:00', datetime(created_at/1000, 'unixepoch', 
-            'localtime'), '+6 hours');`,
-            [recording_sessions_id],
+    return new Promise<GraphData[]>((resolve, reject) => {
+        db.all<GraphData>(
+            `WITH td AS (
+                SELECT t1, t2, t3, t4, created_at, ROW_NUMBER() OVER (ORDER BY id ASC) as rownum FROM temp_data 
+                WHERE recording_sessions_id = ? AND deleted_at IS NULL
+            ),
+            total_records AS (
+                SELECT COUNT(*) FROM td
+            ),
+            data_interval AS (
+                SELECT ? / ROUND(CAST(MAX(created_at) - MIN(created_at) AS FLOAT) / count(*) / 1000) FROM td
+            ),
+            second_to_last_row AS (
+                SELECT * FROM td WHERE rownum % (SELECT * FROM data_interval) = 0 ORDER BY rownum desc LIMIT 1
+            )
+            SELECT * FROM td WHERE rownum = 1 OR rownum = (
+                SELECT * FROM total_records
+            ) OR (
+                rownum % (SELECT * FROM data_interval) = 0 AND rownum NOT IN (
+                    SELECT rownum FROM second_to_last_row WHERE (SELECT max(created_at) FROM td) < created_at + ?
+                )
+            ) ORDER BY created_at ASC;`,
+            [recording_sessions_id, intervalSeconds, rowThresholdMilliseconds],
             (error, rows) => error ? reject(error) : resolve(rows)
         )
     })
@@ -136,9 +134,9 @@ const hardDeleteAllData = () => {
 }
 
 export default {
-    fetchAllData,
-    fetchDownsampledData,
-    fetchDataPerHour,
+    selectAllData,
+    selectBySampleSize,
+    selectByTimeInterval,
     insertData,
     softDeleteAllData,
     hardDeleteAllData

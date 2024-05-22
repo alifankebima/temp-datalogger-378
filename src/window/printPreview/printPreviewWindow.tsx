@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PrintPreviewWindowElectronAPI } from "../../types/printPreviewWindow";
 import SimpleButton from "../../components/SimpleButton";
-import commonHelper from "../../helper/commonHelper";
+import { GraphData } from "../../types/mainWindow";
 
 declare global {
   interface Window {
@@ -16,16 +16,13 @@ const printPreviewWindow = () => {
     duration: "1 Hari, 13 Jam, 24 Menit, 15 Detik",
   });
 
-  const [data, setData] = useState([
-    {
-      t1: 30,
-      t2: null,
-      t3: 30,
-      t4: 30,
-      mc: null,
-      created_at: 1715849283578,
-    },
-  ]);
+  const [data, setData] = useState<GraphData[]>([])
+
+  useEffect(() => {
+    console.log("whaa?");
+    (async () => setData(await window.electronAPIPrintPreview.getTempData()))()
+  }, [])
+
   const handlePrint = () =>
     window.electronAPIPrintPreview.managePrintPreviewWindow("print");
 
@@ -109,7 +106,7 @@ const printPreviewWindow = () => {
                   <td className="border border-black">{value?.t2}</td>
                   <td className="border border-black">{value?.t3}</td>
                   <td className="border border-black">{value?.t4}</td>
-                  <td className="border border-black">{value?.mc}</td>
+                  <td className="border border-black"></td>
                 </tr>
               ))}
             </tbody>

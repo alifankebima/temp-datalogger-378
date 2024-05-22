@@ -116,7 +116,7 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
           Buffer.from('000000' + mockTemp(count).join('').repeat(4) + '000000000000000000000000000000000000000000000000', 'hex')
         )
         count++
-      }, 1000)
+      }, 10000)
     } else {
       port && serialCommand.data.sendOnce(port as SerialPort);
       writeIntvId = setInterval(() => port && serialCommand.data.sendOnce(port as SerialPort), 1500)
@@ -158,8 +158,8 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
         ...parsedTemp
       })
 
-      const fetchGraphData = await tempData.fetchDownsampledData(recordingSessionID);
-      console.log(fetchGraphData)
+      const fetchGraphData = await tempData.selectBySampleSize(recordingSessionID, 100);
+      // console.log(fetchGraphData)
       mainWindow?.webContents.send('main-window:update-graph', fetchGraphData);
     } catch (error) {
       console.error(error)
@@ -319,5 +319,19 @@ ipcMain.on('print-preview-window:manage', (_event, args) => {
       if (success) return console.log("Berhasil print")
       console.error(failure)
     })
+  }
+})
+
+ipcMain.handle('print-preview-window:get-temp-data', async (_event, _args) => {
+  try {
+    console.log("hello?")
+    const recording_sessions_id = 83
+    console.time()
+    const results = await tempData.selectByTimeInterval(recording_sessions_id, 3600)
+    console.log(results)
+    console.timeEnd()
+    return results
+  } catch (error) {
+    console.error(error)
   }
 })
