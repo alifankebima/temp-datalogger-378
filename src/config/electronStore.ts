@@ -9,55 +9,59 @@ const store = new Store<StoreSchema>({
             properties: {
                 // Graph configuration
                 title: {
-                    type: 'string',
-                    default: ''
+                    type: 'string'
                 },
                 subtitle: {
-                    type: 'string',
-                    default: ''
+                    type: 'string'
                 },
                 minGraphTemp: {
-                    type: 'number',
-                    default: 20
+                    type: 'number'
                 },
                 maxGraphTemp: {
-                    type: 'number',
-                    default: 80
+                    type: 'number'
                 },
                 // Sensor monitoring configuration
                 t1monitor: {
-                    type: 'boolean',
-                    default: true
+                    type: 'boolean'
                 },
                 t2monitor: {
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 },
                 t3monitor: {
-                    type: 'boolean',
-                    default: true
+                    type: 'boolean'
                 },
                 t4monitor: {
-                    type: 'boolean',
-                    default: true
+                    type: 'boolean'
                 },
+            },
+            default: {
+                title: '',
+                subtitle: '',
+                minGraphTemp: 20,
+                maxGraphTemp: 80,
+                t1monitor: true,
+                t2monitor: false,
+                t3monitor: true,
+                t4monitor: true
             }
         },
         state: {
             type: 'object',
             properties: {
                 isRecording: {
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 },
                 isStopRecordingManually: {
-                    type: 'boolean',
-                    default: false
+                    type: 'boolean'
                 },
                 recordingSessionID: {
-                    type: 'number',
-                    default: 0
+                    type: 'number'
                 },
+            },
+            default: {
+                isRecording: false,
+                isStopRecordingManually: false,
+                recordingSessionID: 0
             }
         },
         printPreview: {
@@ -83,11 +87,6 @@ const store = new Store<StoreSchema>({
             }
         }
     }
-})
-
-store.set('state', {
-    isRecording: false,
-    isStopRecordingManually: false,
 })
 
 export default store;
