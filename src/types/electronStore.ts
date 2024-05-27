@@ -1,3 +1,5 @@
+import { DropdownItems } from "./dropdown";
+
 export interface StoreSchema {
     config:{
         title: string;
@@ -14,5 +16,7 @@ export interface StoreSchema {
         isStopRecordingManually: boolean,
         recordingSessionID: number
     },
-    serialportMock: boolean
+    printPreview: {
+        sampleInterval: DropdownItems
+    }
 }

@@ -60,18 +60,34 @@ const store = new Store<StoreSchema>({
                 },
             }
         },
-        serialportMock: {
-            type: 'boolean',
-            default: false
+        printPreview: {
+            type: 'object',
+            properties: {
+                sampleInterval: {
+                    type: 'object',
+                    properties: {
+                        name: {
+                            type: 'string',
+                        },
+                        value: {
+                            type: 'number',
+                        }
+                    },
+                }
+            },
+            default: {
+                sampleInterval: {
+                    name: "1 Jam",
+                    value: 3600
+                }
+            }
         }
     }
 })
 
 store.set('state', {
-    isRecording:false,
+    isRecording: false,
     isStopRecordingManually: false,
 })
-
-console.log('electron-store dipanggil');
 
 export default store;

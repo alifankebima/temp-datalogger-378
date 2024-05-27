@@ -52,7 +52,7 @@ const selectBySampleSize = (recording_sessions_id: number, sampleSize: number = 
 
 const selectByTimeInterval = (recording_sessions_id: number, intervalSeconds: number = 3600) => {
     const rowThresholdMilliseconds = 900000
-
+    console.log(intervalSeconds)
     return new Promise<GraphData[]>((resolve, reject) => {
         db.all<GraphData>(
             `WITH td AS (

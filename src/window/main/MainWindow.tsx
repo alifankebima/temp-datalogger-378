@@ -86,7 +86,7 @@ const Main = () => {
   }, []);
   const openSettingWindow = () =>
     window.electronAPImain.manageSettingWindow("open");
-  const openPrintPreviewWindow = () => window.electronAPImain.managePrintPreviewWindow("open");
+  const openPrintPreviewWindow = () => window.electronAPImain.managePrintPreviewWindow({args: "open"});
 
   // Run on component mount & unmount only
   useEffect(() => {

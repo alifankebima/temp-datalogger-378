@@ -1,4 +1,5 @@
 import { StoreSchema } from "./electronStore";
+import { ManagePrintPreviewWindow } from "./printPreviewWindow";
 
 export interface Temps<T = number | null | undefined> {
     t1: T,
@@ -16,7 +17,7 @@ export interface MainWindowElectronAPI {
     startRecord: (isDataExists: boolean) => void;
     stopRecord: (isStoppedManually: boolean) => void;
     manageSettingWindow: (manage: "open" | "close") => void;
-    managePrintPreviewWindow: (manage: "open" | "close") => void;
+    managePrintPreviewWindow: (args: ManagePrintPreviewWindow) => void;
     updateGraph: (callback: (data: GraphData[]) => void) => void;
     removeUpdateGraph: () => void;
     updateTempDisplay: (callback: (data: Temps<number>) => void) => void;

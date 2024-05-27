@@ -4,6 +4,7 @@ import { MockBindingInterface } from '@serialport/binding-mock';
 import { SerialPortStream } from '@serialport/stream';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 
 import recordingSessions from './model/recordingSessions';
 import { graphSettingForm } from './types/settingWindow';
@@ -17,6 +18,7 @@ import { Temps } from './types/mainWindow';
 import mockTemp from './helper/mockTemp';
 import tempData from './model/tempData';
 import db from './config/sqlite';
+import { PrintPreviewConfing } from './types/printPreviewWindow';
 
 dotenv.config()
 
@@ -177,7 +179,11 @@ app.on('ready', () => {
 ipcMain.on('main-window:console-log', async (_event, data: unknown) => console.log(data))
 ipcMain.on('setting-window:console-log', async (_event, data: unknown) => console.log(data))
 
-ipcMain.handle('electron-store:get', (_event, key: string) => store.get(key))
+ipcMain.handle('electron-store:get', (_event, key: string) => {
+  console.log(key)
+  console.log(store.get(key))
+  return store.get(key)
+})
 ipcMain.on('electron-store:set', (_event, { key, value }) => store.set(key, value))
 
 ipcMain.on("main-window:start-record", async (_event, isDataExists: boolean) => {
@@ -235,7 +241,7 @@ ipcMain.on("main-window:stop-record", async (_event, isStoppedManually: boolean)
 });
 
 ipcMain.on('setting-window:manage', (_event, args) => {
-  if (settingWindow !== null && args == 'close') {
+  if (settingWindow !== null && args === 'close') {
     mainWindow?.webContents.send('main-window:update-config', store.get('config'))
     return settingWindow.close()
   }
@@ -277,18 +283,24 @@ ipcMain.on('setting-window:update-config', (_event, newConfigData: graphSettingF
   mainWindow?.webContents.send('main-window:update-config', store.get('config'))
 })
 
-ipcMain.on('print-preview-window:manage', (_event, args) => {
-  if (printPreviewWindow !== null && args == 'close') {
+ipcMain.on('print-preview-window:update-config', (_event, newConfigData: PrintPreviewConfing) => {
+  store.set('printPreview.sampleInterval', newConfigData.sampleInterval)
+  console.log(store.get('printPreview'))
+})
+
+ipcMain.on('print-preview-window:manage', (_event, { args, startTimestamp, endTimestamp }) => {
+  if (printPreviewWindow !== null && args === 'close') {
     return printPreviewWindow.close()
   }
 
-  if (args === 'open') {
+  const createPrintPreviewWindow = () => {
     if (printPreviewWindow) return printPreviewWindow.focus()
+
     printPreviewWindow = new BrowserWindow({
-      width: 620,
+      width: 650,
       height: 700,
-      minWidth: 210 * 2,
-      minHeight: 297 * 2,
+      minWidth: 635,
+      minHeight: 594,
       parent: mainWindow ?? undefined,
       modal: true,
       show: false,
@@ -305,31 +317,65 @@ ipcMain.on('print-preview-window:manage', (_event, args) => {
       printPreviewWindow.loadFile(path.join(__dirname, `../renderer/${PRINT_PREVIEW_WINDOW_VITE_NAME}/index.html`));
     }
 
-    printPreviewWindow.once('ready-to-show', () => printPreviewWindow?.show())
-
     printPreviewWindow.on('closed', () => {
       printPreviewWindow = null
     })
   }
 
-  if (args == "print") {
+  if (args === 'open') {
+    createPrintPreviewWindow()
+    printPreviewWindow?.once('ready-to-show', () => printPreviewWindow?.show())
+  }
+
+  if (args === "print") {
     printPreviewWindow?.webContents.print({
       pageSize: 'A4'
-    }, (success, failure) => {
-      if (success) return console.log("Berhasil print")
-      console.error(failure)
+    }, (_success, failure) => {
+      if (failure) console.error(failure)
+      // if(printPreviewWindow) printPreviewWindow.close()
     })
+  }
+
+  if (args === "pdf") {
+    (async () => {
+      try {
+        if (!printPreviewWindow) createPrintPreviewWindow()
+
+        let fileName = "KLIN DRY"
+        fileName += " " + commonHelper.formatFileDate(startTimestamp, endTimestamp).toUpperCase()
+        fileName += ".pdf"
+
+        const saveDialog = await dialog.showSaveDialog({
+          title: "Simpan Sebagai PDF",
+          defaultPath: path.join(app.getPath("documents"), fileName),
+          filters: [
+            { name: "File PDF", extensions: ["pdf"] }
+          ]
+        })
+
+        if (saveDialog.canceled || !saveDialog.filePath) return
+
+        const pdfFile = await printPreviewWindow?.webContents.printToPDF({
+          pageSize: 'A4'
+        })
+
+        if (!pdfFile) throw new Error("Gagal mengenerate file PDF")
+
+        fs.writeFile(saveDialog.filePath, pdfFile, (error) => {
+          if (error) throw error
+          // if (printPreviewWindow) printPreviewWindow.close()
+        })
+      } catch (error) {
+        console.error(error)
+      }
+    })()
   }
 })
 
-ipcMain.handle('print-preview-window:get-temp-data', async (_event, _args) => {
+ipcMain.handle('print-preview-window:get-temp-data', async (_event, args) => {
   try {
-    console.log("hello?")
     const recording_sessions_id = 83
-    console.time()
-    const results = await tempData.selectByTimeInterval(recording_sessions_id, 3600)
-    console.log(results)
-    console.timeEnd()
+    const results = await tempData.selectByTimeInterval(recording_sessions_id, args)
     return results
   } catch (error) {
     console.error(error)
