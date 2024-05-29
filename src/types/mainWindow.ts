@@ -14,15 +14,18 @@ export interface GraphData extends Temps {
 
 export interface MainWindowElectronAPI {
     getConfig: () => Promise<StoreSchema["config"]>;
+    getDevicePath: () => Promise<StoreSchema["devicePath"]>;
     startRecord: (isDataExists: boolean) => void;
     stopRecord: (isStoppedManually: boolean) => void;
     manageSettingWindow: (manage: "open" | "close") => void;
     managePrintPreviewWindow: (args: ManagePrintPreviewWindow) => void;
+    saveFile: (args: unknown) => void;
     updateGraph: (callback: (data: GraphData[]) => void) => void;
     removeUpdateGraph: () => void;
     updateTempDisplay: (callback: (data: Temps<number>) => void) => void;
     removeUpdateTempDisplay: () => void;
     updateConfig: (callback: (data:StoreSchema['config']) => void) => void;
+    updateDevicePath: (callback: (data:string) => void) => void;
     removeUpdateConfig: () => void;
     startRecordCallback: (callback: (isContinueRecord: boolean) => void) => void;
     removeStartRecordCallback: () => void;

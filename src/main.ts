@@ -10,6 +10,7 @@ import recordingSessions from './model/recordingSessions';
 import { graphSettingForm } from './types/settingWindow';
 import serialCommand from './helper/serialCommand';
 import commonHelper from './helper/commonHelper';
+import fileSaver from './helper/fileSaver';
 import customMenuTemplate from './config/menu';
 import serialport from './config/serialport';
 import serialmock from './config/serialmock';
@@ -31,7 +32,8 @@ let count: number = 0;
 
 if (require('electron-squirrel-startup')) app.quit();
 
-Menu.setApplicationMenu(Menu.buildFromTemplate(customMenuTemplate()));
+// Menu.setApplicationMenu(Menu.buildFromTemplate(customMenuTemplate()));
+Menu.setApplicationMenu(null);
 
 const createMainWindow = () => {
   mainWindow = new BrowserWindow({
@@ -70,6 +72,9 @@ app.on('window-all-closed', () => {
 
   db.close((error) => error ? console.log("Database closed") : console.error("e"))
 
+  port?.close()
+  store.reset('devicePath')
+  store.reset('state')
   ipcMain.removeAllListeners('main-window:console-log')
   ipcMain.removeAllListeners('main-window:start-record')
   ipcMain.removeAllListeners('main-window:stop-record')
@@ -77,6 +82,8 @@ app.on('window-all-closed', () => {
   ipcMain.removeAllListeners('setting-window:manage')
   ipcMain.removeAllListeners('electron-store:set')
   ipcMain.removeHandler('electron-store:get')
+
+  console.log(store.get('devicePath'))
 
   app.quit();
 });
@@ -127,6 +134,7 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
 
   port.on('close', () => {
     console.log('Device disconnected')
+    store.set('state.devicePath', '')
     clearInterval(writeIntvId)
     const defaultTemps: Temps = {
       t1: null,
@@ -277,6 +285,11 @@ ipcMain.on('setting-window:manage', (_event, args) => {
   }
 })
 
+store.onDidChange('devicePath', (newValue, _oldValue) => {
+  console.log("woaw" + newValue)
+  mainWindow?.webContents.send('main-window:update-device-path', newValue)
+})
+
 ipcMain.on('setting-window:update-config', (_event, newConfigData: graphSettingForm) => {
   store.set('config.title', newConfigData.title)
   store.set('config.subtitle', newConfigData.subtitle)
@@ -380,4 +393,21 @@ ipcMain.handle('print-preview-window:get-temp-data', async (_event, args) => {
   } catch (error) {
     console.error(error)
   }
+})
+
+ipcMain.on('main-process:save-file', async (_event, _args) => {
+  const saveDialog = await dialog.showSaveDialog({
+    title: "Simpan Sebagai PDF",
+    defaultPath: path.join(app.getPath("documents"), "test.pdf"),
+    filters: [
+      { name: "PDF (*.pdf)", extensions: ["pdf"] },
+      { name: "Excel 2007 - 365 (*.xlsx)", extensions: ["xlsx"] }
+    ]
+  })
+
+  console.log(saveDialog)
+  console.log(path.extname(saveDialog.filePath ?? ".what"))
+
+  const recordingSessionID = 83
+  fileSaver.saveAsExcel(recordingSessionID)
 })

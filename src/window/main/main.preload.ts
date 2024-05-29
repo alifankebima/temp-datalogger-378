@@ -3,8 +3,10 @@ import { MainWindowElectronAPI, GraphData } from "../../types/mainWindow";
 
 const electronAPI: MainWindowElectronAPI = {
     getConfig: () => ipcRenderer.invoke('electron-store:get', 'config'),
+    getDevicePath: () => ipcRenderer.invoke('electron-store:get', 'devicePath'),
     startRecord: (isDataExists) => ipcRenderer.send("main-window:start-record", isDataExists),
     stopRecord: (isStoppedManually) => ipcRenderer.send("main-window:stop-record", isStoppedManually),
+    saveFile: (args) => ipcRenderer.send("main-process:save-file", args),
     manageSettingWindow: (manage) => ipcRenderer.send("setting-window:manage", manage),
     managePrintPreviewWindow: (manage) => ipcRenderer.send("print-preview-window:manage", manage),
     updateGraph: (callback) => ipcRenderer.on("main-window:update-graph", (_event, data: GraphData[]) => callback(data)),
@@ -13,6 +15,7 @@ const electronAPI: MainWindowElectronAPI = {
     removeUpdateTempDisplay: () => ipcRenderer.removeAllListeners("main-window:update-temp-display"),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     updateConfig: (callback) => ipcRenderer.on("main-window:update-config", (_event, data) => callback(data)),
+    updateDevicePath: (callback) => ipcRenderer.on("main-window:update-device-path", (_event, data) => callback(data)),
     removeUpdateConfig: () => ipcRenderer.removeAllListeners("main-window:update-config"),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     startRecordCallback: (callback) => ipcRenderer.on("main-window:start-record-callback", (_event, isContinueRecord) => callback(isContinueRecord)),

@@ -14,8 +14,9 @@ export interface StoreSchema {
     state: {
         isRecording: boolean,
         isStopRecordingManually: boolean,
-        recordingSessionID: number
+        recordingSessionID: number,
     },
+    devicePath: string,
     printPreview: {
         sampleInterval: DropdownItems
     }

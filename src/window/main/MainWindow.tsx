@@ -1,6 +1,7 @@
 import React, { useCallback, useState, useEffect } from "react";
 import { PiRecordFill, PiStopFill } from "react-icons/pi";
 import { IoMdSettings, IoMdSave, IoMdPrint } from "react-icons/io";
+import { ImFilePdf } from "react-icons/im";
 import {
   LineChart,
   Line,
@@ -37,6 +38,7 @@ const Main = () => {
   const [config, setConfig] = useState<StoreSchema["config"]>();
   useEffect(() => {
     (async () => setConfig(await window.electronAPImain.getConfig()))();
+    (async () => setDevicePath(await window.electronAPImain.getDevicePath()))();
   }, []);
 
   // Graph states
@@ -62,6 +64,10 @@ const Main = () => {
   // Navigation bar states
   const [isRecording, setIsRecording] = useState<boolean>(false);
 
+  // Status bar states
+  const [currentDatetime, setCurrentDatetime] = useState(new Date().toLocaleString())
+  const [devicePath, setDevicePath] = useState("");
+
   // User event handlers
   const handleStartRecording = () =>
     window.electronAPImain.startRecord(!!graphData.length);
@@ -86,13 +92,21 @@ const Main = () => {
   }, []);
   const openSettingWindow = () =>
     window.electronAPImain.manageSettingWindow("open");
-  const openPrintPreviewWindow = () => window.electronAPImain.managePrintPreviewWindow({args: "open"});
+  const openPrintPreviewWindow = () =>
+    window.electronAPImain.managePrintPreviewWindow({ args: "open" }); 
+  const saveGraphAsPDF = () =>
+    window.electronAPImain.saveFile({ args: "pdf" });
 
   // Run on component mount & unmount only
   useEffect(() => {
+    const timerId = setInterval(() => {
+      setCurrentDatetime(new Date().toLocaleString());
+    }, 1000);
+
     window.electronAPImain.ping();
     window.electronAPImain.pong();
     window.electronAPImain.updateGraph((data) => setGraphData(data));
+    window.electronAPImain.updateDevicePath((data) => setDevicePath(data));
     window.electronAPImain.updateTempDisplay((data) => {
       setCurrentTemp({
         t1: data.t1,
@@ -121,7 +135,7 @@ const Main = () => {
     });
     window.electronAPImain.updateConfig((data) => setConfig(data));
     window.electronAPImain.startRecordCallback((isContinueRecord) => {
-      if(!isContinueRecord) setGraphData([]);
+      if (!isContinueRecord) setGraphData([]);
       setIsRecording(true);
     });
     window.electronAPImain.stopRecordCallback(() => {
@@ -138,6 +152,7 @@ const Main = () => {
     // })();
 
     return () => {
+      clearInterval(timerId);
       window.electronAPImain.removeUpdateGraph();
       window.electronAPImain.removeUpdateTempDisplay();
       window.electronAPImain.removeUpdateConfig();
@@ -175,16 +190,28 @@ const Main = () => {
               graphData.length ? "text-sky-900" : "text-gray-300"
             } text-4xl`}
           />
-          <div className="text-sm">Simpan</div>
+          <div className="text-xs">Simpan Gambar</div>
         </NavbarButton>
 
-        <NavbarButton onClick={openPrintPreviewWindow} disabled={!graphData.length}>
+        <NavbarButton onClick={saveGraphAsPDF} disabled={!graphData.length}>
+          <ImFilePdf
+            className={`${
+              graphData.length ? "text-sky-900" : "text-gray-300"
+            } text-4xl`}
+          />
+          <div className="text-xs">Simpan</div>
+        </NavbarButton>
+
+        <NavbarButton
+          onClick={openPrintPreviewWindow}
+          disabled={!graphData.length}
+        >
           <IoMdPrint
             className={`${
               graphData.length ? "text-indigo-900" : "text-gray-300"
             } text-4xl`}
           />
-          <div className="text-sm">Print</div>
+          <div className="text-xs">Print</div>
         </NavbarButton>
 
         <div className="border-l border-gray-400 h-16 w-0.5 mx-2" />
@@ -194,7 +221,7 @@ const Main = () => {
           <div className="text-sm">Pengaturan</div>
         </NavbarButton>
       </div>
-      <div className="flex flex-grow">
+      <div className="flex grow">
         <div className="flex flex-col w-30">
           <TempDisplay
             name="T1"
@@ -206,6 +233,7 @@ const Main = () => {
             disabled={
               config?.t1monitor !== undefined ? !config.t1monitor : false
             }
+            className="border-b"
           />
           <TempDisplay
             name="T2"
@@ -217,6 +245,7 @@ const Main = () => {
             disabled={
               config?.t2monitor !== undefined ? !config.t2monitor : false
             }
+            className="border-b"
           />
           <TempDisplay
             name="T3"
@@ -228,6 +257,7 @@ const Main = () => {
             disabled={
               config?.t3monitor !== undefined ? !config.t3monitor : false
             }
+            className="border-b"
           />
           <TempDisplay
             name="T4"
@@ -246,109 +276,111 @@ const Main = () => {
           <div className="text-lg text-center whitespace-pre-line line-clamp-4 min-h-10">
             {config?.subtitle}
           </div>
-          <div className="flex-grow w-full">
-            <ResponsiveContainer height="100%" width="100%">
-              <LineChart
-                data={graphData}
-                margin={{
-                  top: 5,
-                  right: 35,
-                  left: 25,
-                  bottom: 10,
+          <ResponsiveContainer height="88%" width="100%">
+            <LineChart
+              data={graphData}
+              margin={{
+                top: 5,
+                right: 35,
+                left: 25,
+                bottom: 10,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                xAxisId={0}
+                dataKey="created_at"
+                height={20}
+                interval={"preserveStartEnd"}
+                tick={dateTimeAxisTick}
+                minTickGap={50}
+              />
+              <XAxis
+                xAxisId={1}
+                dataKey="created_at"
+                height={80}
+                interval={"preserveStartEnd"}
+                tick={(props) => dateTimeAxisTick({ ...props, showDate: true })}
+                minTickGap={50}
+                axisLine={false}
+                tickLine={false}
+                label={{
+                  value: "Waktu",
+                  position: "InsideBottom",
                 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  xAxisId={0}
-                  dataKey="created_at"
-                  height={20}
-                  interval={"preserveStartEnd"}
-                  tick={dateTimeAxisTick}
-                  minTickGap={50}
+              />
+              <YAxis
+                type="number"
+                label={{
+                  value: "Suhu (°C)",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
+                domain={[
+                  config?.minGraphTemp ?? 0,
+                  config?.maxGraphTemp ?? 100,
+                ]}
+              />
+              {config?.t1monitor && (
+                <Line
+                  connectNulls
+                  type="monotone"
+                  dataKey="t1"
+                  stroke="#dc2626"
+                  dot={false}
+                  animationDuration={0}
+                  strokeWidth={2}
                 />
-                <XAxis
-                  xAxisId={1}
-                  dataKey="created_at"
-                  height={80}
-                  interval={"preserveStartEnd"}
-                  tick={(props) =>
-                    dateTimeAxisTick({ ...props, showDate: true })
-                  }
-                  minTickGap={50}
-                  axisLine={false}
-                  tickLine={false}
-                  label={{
-                    value: "Waktu",
-                    position: "InsideBottom",
-                  }}
+              )}
+              {config?.t2monitor && (
+                <Line
+                  connectNulls
+                  type="monotone"
+                  dataKey="t2"
+                  stroke="#ca8a04"
+                  dot={false}
                 />
-                <YAxis
-                  type="number"
-                  label={{
-                    value: "Suhu (°C)",
-                    angle: -90,
-                    position: "insideLeft",
-                  }}
-                  domain={[
-                    config?.minGraphTemp ?? 0,
-                    config?.maxGraphTemp ?? 100,
-                  ]}
+              )}
+              {config?.t3monitor && (
+                <Line
+                  connectNulls
+                  type="monotone"
+                  dataKey="t3"
+                  stroke="#16a34a"
+                  dot={false}
+                  animationDuration={0}
+                  strokeWidth={2}
                 />
-                {config?.t1monitor && (
-                  <Line
-                    connectNulls
-                    type="monotone"
-                    dataKey="t1"
-                    stroke="#dc2626"
-                    dot={false}
-                    animationDuration={0}
-                    strokeWidth={2}
-                  />
-                )}
-                {config?.t2monitor && (
-                  <Line
-                    connectNulls
-                    type="monotone"
-                    dataKey="t2"
-                    stroke="#ca8a04"
-                    dot={false}
-                  />
-                )}
-                {config?.t3monitor && (
-                  <Line
-                    connectNulls
-                    type="monotone"
-                    dataKey="t3"
-                    stroke="#16a34a"
-                    dot={false}
-                    animationDuration={0}
-                    strokeWidth={2}
-                  />
-                )}
-                {config?.t4monitor && (
-                  <Line
-                    connectNulls
-                    type="monotone"
-                    dataKey="t4"
-                    stroke="#2563eb"
-                    dot={false}
-                    animationDuration={0}
-                    strokeWidth={2}
-                  />
-                )}
-                <Tooltip
-                  labelFormatter={(timestamp) =>
-                    commonHelper.formatDateTime(timestamp)
-                  }
+              )}
+              {config?.t4monitor && (
+                <Line
+                  connectNulls
+                  type="monotone"
+                  dataKey="t4"
+                  stroke="#2563eb"
+                  dot={false}
+                  animationDuration={0}
+                  strokeWidth={2}
                 />
-                <Legend formatter={legendGraph} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+              )}
+              <Tooltip
+                labelFormatter={(timestamp) =>
+                  commonHelper.formatDateTime(timestamp)
+                }
+              />
+              <Legend formatter={legendGraph} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
+      </div>
+      <div className="flex bg-gray-50 border border-gray-400 text-xs text-gray-700">
+        {/* <div className="bg-gray-50 border-gray-400 border-r border-collapse py-0.5 px-2 grow"></div> */}
+        <div className="bg-gray-50 border-gray-400 border-r border-collapse py-0.5 px-2">{devicePath ? devicePath : "Mencari Perangkat"}</div>
+        <div className="bg-gray-50 border-gray-400 border-collapse py-0.5 px-2">{currentDatetime}</div>
       </div>
     </div>
   );
 };
 
 export default Main;
+

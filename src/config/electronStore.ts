@@ -56,13 +56,17 @@ const store = new Store<StoreSchema>({
                 },
                 recordingSessionID: {
                     type: 'number'
-                },
+                }
             },
             default: {
                 isRecording: false,
                 isStopRecordingManually: false,
-                recordingSessionID: 0
+                recordingSessionID: 0,
             }
+        },
+        devicePath: {
+            type:'string',
+            default:''
         },
         printPreview: {
             type: 'object',
@@ -88,5 +92,7 @@ const store = new Store<StoreSchema>({
         }
     }
 })
+
+store.set('devicePath', '')
 
 export default store;

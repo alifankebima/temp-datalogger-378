@@ -10,19 +10,30 @@ interface InsertData {
     moisture_content?: number
 }
 
-interface SelectData extends InsertData {
+export interface SelectData extends InsertData {
     created_at: number
 }
 
-const selectAllData = (recording_sessions_id: number) => {
-    return new Promise<SelectData[]>((resolve, reject) => {
-        db.all<SelectData>(
+interface ExcelData {
+    t1?: number,
+    t2?: number,
+    t3?: number,
+    t4?: number,
+    tanggal_waktu: number
+}
+
+const selectForExcel = (recording_sessions_id: number) => {
+    const timezoneOffset = new Date().getTimezoneOffset() * -60000
+
+    return new Promise<ExcelData[]>((resolve, reject) => {
+        db.all<ExcelData>(
             `SELECT 
-                t1, t2, t3, t4, moisture_content, created_at 
+                t1 AS T1, t2 AS T2, t3 AS T3, t4 AS T4, 
+                CAST(created_at + ? AS FLOAT) / 86400000 + 25569 AS Tanggal_Waktu
             FROM temp_data 
             WHERE recording_sessions_id=? AND deleted_at IS NULL 
             ORDER BY created_at ASC;`,
-            [recording_sessions_id],
+            [timezoneOffset, recording_sessions_id],
             (error, rows) => error ? reject(error) : resolve(rows)
         )
     })
@@ -134,7 +145,7 @@ const hardDeleteAllData = () => {
 }
 
 export default {
-    selectAllData,
+    selectForExcel,
     selectBySampleSize,
     selectByTimeInterval,
     insertData,

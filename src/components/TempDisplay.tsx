@@ -9,6 +9,7 @@ interface TempDisplayProps {
   maxTemp?: number | null;
   disabled?: boolean;
   unit?: "C" | "F";
+  className?: string
 }
 
 const tempLimit = (input?: number | null): string => {
@@ -28,9 +29,10 @@ const TempDisplay: React.FC<TempDisplayProps> = ({
   maxTemp,
   disabled,
   unit = "C",
+  className
 }) => {
   return (
-    <div className="bg-gray-50 flex grow flex-col justify-center border-b border-r border-gray-400 p-2 w-56">
+    <div className={`bg-gray-50 flex grow flex-col justify-center border-r border-gray-400 p-2 w-56 ${className}`}>
       <div className="flex items-center w-full">
         <div>
           <div
