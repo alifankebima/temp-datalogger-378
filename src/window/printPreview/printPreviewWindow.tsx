@@ -6,6 +6,7 @@ import { GraphData } from "../../types/mainWindow";
 import commonHelper from "../../helper/commonHelper";
 import logoGrayscale from "../../assets/img/logoGrayscale.png";
 import { DropdownItems } from "../../types/dropdown";
+import format from "../../helper/format";
 
 declare global {
   interface Window {
@@ -38,7 +39,9 @@ const printPreviewWindow = () => {
 
   useEffect(() => {
     (async () => {
+      const state = await window.electronAPIPrintPreview.getState()
       const result = await window.electronAPIPrintPreview.getTempData(
+        state.recordingSessionID,
         sampleInterval.value
       );
       const entry = result[0]?.created_at ?? 0
@@ -49,9 +52,9 @@ const printPreviewWindow = () => {
 
       setData(result);
       setMetadata({
-        entryDate: commonHelper.formatDate(entry),
-        exitDate: commonHelper.formatDate(exit),
-        duration: commonHelper.formatDuration(exit - entry),
+        entryDate: format.date(entry),
+        exitDate: format.date(exit),
+        duration: format.duration(exit - entry),
       });
     })();
   }, [sampleInterval.value]);
@@ -169,11 +172,11 @@ const printPreviewWindow = () => {
                 <tr key={value.created_at} className="border-t border-black">
                   <td className="border border-black">{index + 1}</td>
                   <td className="border border-black">
-                    {commonHelper.formatDate(value.created_at)}
+                    {format.date(value.created_at)}
                   </td>
                   <td className="border border-black">
                     {/* {new Date(value.created_at).toTimeString().split(" ")[0]} */}
-                    {commonHelper.formatTime(value.created_at)}
+                    {format.time(value.created_at)}
                   </td>
                   <td className="border border-black">{value?.t1}</td>
                   <td className="border border-black">{value?.t2}</td>

@@ -13,8 +13,9 @@ export interface PrintPreviewConfing {
 
 export interface PrintPreviewWindowElectronAPI {
     managePrintPreviewWindow: (args: ManagePrintPreviewWindow) => void;
-    getTempData: (intervalSeconds: number) => Promise<GraphData[]>,
+    getTempData: (recordingSessionID: number, intervalSeconds: number) => Promise<GraphData[]>,
     getPrintPreviewConfig: () => Promise<StoreSchema["printPreview"]>;
+    getState: () => Promise<StoreSchema["state"]>;
     updatePrintPreviewConfig: (configData: PrintPreviewConfing) => void;
     ping: () => void,
     pong: () => void

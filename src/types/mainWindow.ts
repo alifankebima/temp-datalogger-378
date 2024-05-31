@@ -1,7 +1,7 @@
 import { StoreSchema } from "./electronStore";
 import { ManagePrintPreviewWindow } from "./printPreviewWindow";
 
-export interface Temps<T = number | null | undefined> {
+export interface Temps<T = number | undefined> {
     t1: T,
     t2: T,
     t3: T,

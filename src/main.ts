@@ -4,7 +4,6 @@ import { MockBindingInterface } from '@serialport/binding-mock';
 import { SerialPortStream } from '@serialport/stream';
 import dotenv from 'dotenv';
 import path from 'path';
-import fs from 'fs';
 
 import recordingSessions from './model/recordingSessions';
 import { graphSettingForm } from './types/settingWindow';
@@ -20,6 +19,8 @@ import mockTemp from './helper/mockTemp';
 import tempData from './model/tempData';
 import db from './config/sqlite';
 import { PrintPreviewConfing } from './types/printPreviewWindow';
+import { SaveFileArgs } from './types/main';
+import format from './helper/format';
 
 dotenv.config()
 
@@ -32,7 +33,6 @@ let count: number = 0;
 
 if (require('electron-squirrel-startup')) app.quit();
 
-// Menu.setApplicationMenu(Menu.buildFromTemplate(customMenuTemplate()));
 Menu.setApplicationMenu(null);
 
 const createMainWindow = () => {
@@ -46,28 +46,33 @@ const createMainWindow = () => {
     },
   });
 
+  console.log(MAIN_WINDOW_VITE_DEV_SERVER_URL)
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
+
+  mainWindow.setMenu(Menu.buildFromTemplate(customMenuTemplate()))
 };
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 app.on('window-all-closed', () => {
   if (process.platform === 'darwin') return
 
   // Cleanup
   if (store.get('store.isStopRecordManually')) {
-    try {
-      tempData.softDeleteAllData()
-      recordingSessions.softDeleteAllData()
-    } catch (error) {
-      console.error(error)
-    }
+
+    tempData.softDeleteAllData()
+    recordingSessions.softDeleteAllData()
   }
 
   db.close((error) => error ? console.log("Database closed") : console.error("e"))
@@ -83,8 +88,6 @@ app.on('window-all-closed', () => {
   ipcMain.removeAllListeners('electron-store:set')
   ipcMain.removeHandler('electron-store:get')
 
-  console.log(store.get('devicePath'))
-
   app.quit();
 });
 
@@ -95,9 +98,6 @@ app.on('activate', () => {
     createMainWindow();
   }
 });
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
 
 // Handle serial device auto reconnect and communication
 const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
@@ -115,7 +115,7 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
     length: 35
   }));
 
-  port.on('error', commonHelper.handleError);
+  port.on('error', (error) => { throw error });
 
   port.on('open', () => {
     console.log('Device connected');
@@ -137,10 +137,10 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
     store.set('state.devicePath', '')
     clearInterval(writeIntvId)
     const defaultTemps: Temps = {
-      t1: null,
-      t2: null,
-      t3: null,
-      t4: null
+      t1: undefined,
+      t2: undefined,
+      t3: undefined,
+      t4: undefined
     }
     mainWindow?.webContents.send('main-window:update-temp-display', defaultTemps)
     mainWindow?.webContents.send('main-window:stop-record-callback')
@@ -184,68 +184,63 @@ app.on('ready', () => {
 });
 
 // -------------------- Ipc communications --------------------
-ipcMain.on('main-window:console-log', async (_event, data: unknown) => console.log(data))
-ipcMain.on('setting-window:console-log', async (_event, data: unknown) => console.log(data))
-
-ipcMain.handle('electron-store:get', (_event, key: string) => {
-  console.log(key)
-  console.log(store.get(key))
-  return store.get(key)
-})
+ipcMain.handle('electron-store:get', (_event, key: string) => store.get(key))
 ipcMain.on('electron-store:set', (_event, { key, value }) => store.set(key, value))
+store.onDidChange('devicePath', (newValue) => {
+  mainWindow?.webContents.send('main-window:update-status-bar', {
+    devicePath: newValue
+  })
+})
 
-ipcMain.on("main-window:start-record", async (_event, isDataExists: boolean) => {
-  try {
-    let userResponse: number | null = null
+ipcMain.on("main-window:start-record", async (event, isDataExists: boolean) => {
+  let userResponse: number | undefined
+  const currentWindow = BrowserWindow.fromWebContents(event.sender)
+  if (!currentWindow) return
 
-    if (mainWindow === null) return
-    if (isDataExists) {
-      // mainWindow.webContents.send('main-window:start-record-callback')
-      // store.set('state.isRecording', true)
-      const messageBox = await dialog.showMessageBox(mainWindow, {
-        'type': 'question',
-        'title': 'Confirmation',
-        'message': "Apakah Anda yakin ingin memulai rekaman?",
-        'buttons': [
-          'Hapus data dan mulai rekaman',
-          'Lanjut merekam data',
-          'Tidak'
-        ]
+  if (isDataExists) {
+    const messageBox = await dialog.showMessageBox(currentWindow, {
+      type: 'question',
+      title: 'Confirmation',
+      message: "Apakah Anda yakin ingin memulai rekaman?",
+      buttons: [
+        'Hapus data dan mulai rekaman',
+        'Lanjut merekam data',
+        'Tidak'
+      ],
+      cancelId: 2,
+      defaultId: 1
+    })
+    userResponse = messageBox.response
+  }
+
+  if (userResponse === 2) return
+  if (userResponse === 0) await tempData.softDeleteAllData()
+
+  if (userResponse === 0 || userResponse === 1 || !isDataExists) {
+    event.reply('main-window:start-record-callback', userResponse === 1)
+    store.set('state.isRecording', true)
+
+    if (userResponse === 0 || !isDataExists) {
+      await recordingSessions.insertData({
+        graph_title: store.get('config.title'),
+        graph_subtitle: store.get('config.subtitle')
       })
-      userResponse = messageBox.response
     }
 
-    console.log('user response' + userResponse)
+    const result = await recordingSessions.fetchLastData();
+    console.log(result)
 
-    if (userResponse === 2) return
-    if (userResponse === 0) await tempData.softDeleteAllData()
-
-    if (userResponse === 0 || userResponse === 1 || !isDataExists) {
-      mainWindow.webContents.send('main-window:start-record-callback', userResponse === 1)
-      store.set('state.isRecording', true)
-
-      if (userResponse === 0 || !isDataExists) {
-        await recordingSessions.insertData({
-          graph_title: store.get('config.title'),
-          graph_subtitle: store.get('config.subtitle')
-        })
-      }
-
-      const result = await recordingSessions.fetchLastData();
-      console.log(result)
-
-      store.set('state.recordingSessionID', result?.id ?? 0)
-      console.log('recording session ' + store.get('state.recordingSessionID'))
-    }
-  } catch (error) {
-    commonHelper.handleError(error)
+    store.set('state.recordingSessionID', result?.id ?? 0)
+    console.log('recording session ' + store.get('state.recordingSessionID'))
   }
 });
 
-ipcMain.on("main-window:stop-record", async (_event, isStoppedManually: boolean) => {
-  store.set('state.isStopRecordingManually', isStoppedManually)
-  store.set('state.isRecording', false)
-  store.set('state.recordingSessionID', 0)
+ipcMain.on("main-window:stop-record", async () => {
+  store.set('state', {
+    isStoppedRecordingManually: true,
+    isRecording: false,
+    recordingSessionID: 0
+  })
 });
 
 ipcMain.on('setting-window:manage', (_event, args) => {
@@ -285,54 +280,48 @@ ipcMain.on('setting-window:manage', (_event, args) => {
   }
 })
 
-store.onDidChange('devicePath', (newValue, _oldValue) => {
-  console.log("woaw" + newValue)
-  mainWindow?.webContents.send('main-window:update-device-path', newValue)
-})
+
 
 ipcMain.on('setting-window:update-config', (_event, newConfigData: graphSettingForm) => {
-  store.set('config.title', newConfigData.title)
-  store.set('config.subtitle', newConfigData.subtitle)
+  store.set('config', newConfigData)
   mainWindow?.webContents.send('main-window:update-config', store.get('config'))
 })
 
 ipcMain.on('print-preview-window:update-config', (_event, newConfigData: PrintPreviewConfing) => {
-  store.set('printPreview.sampleInterval', newConfigData.sampleInterval)
-  console.log(store.get('printPreview'))
+  store.set('printPreview', newConfigData)
 })
 
-ipcMain.on('print-preview-window:manage', (_event, { args, startTimestamp, endTimestamp }) => {
-  if (printPreviewWindow !== null && args === 'close') {
-    return printPreviewWindow.close()
+const createPrintPreviewWindow = () => {
+  if (printPreviewWindow) return printPreviewWindow.focus()
+
+  printPreviewWindow = new BrowserWindow({
+    width: 650,
+    height: 700,
+    minWidth: 635,
+    minHeight: 594,
+    parent: mainWindow ?? undefined,
+    modal: true,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'printPreview.preload.js'),
+    },
+  })
+
+  if (PRINT_PREVIEW_WINDOW_VITE_DEV_SERVER_URL) {
+    printPreviewWindow.loadURL(PRINT_PREVIEW_WINDOW_VITE_DEV_SERVER_URL);
+    printPreviewWindow.webContents.openDevTools();
+  } else {
+    printPreviewWindow.loadFile(path.join(__dirname, `../renderer/${PRINT_PREVIEW_WINDOW_VITE_NAME}/index.html`));
   }
 
-  const createPrintPreviewWindow = () => {
-    if (printPreviewWindow) return printPreviewWindow.focus()
+  printPreviewWindow.on('closed', () => {
+    printPreviewWindow = null
+  })
+}
 
-    printPreviewWindow = new BrowserWindow({
-      width: 650,
-      height: 700,
-      minWidth: 635,
-      minHeight: 594,
-      parent: mainWindow ?? undefined,
-      modal: true,
-      show: false,
-      webPreferences: {
-        preload: path.join(__dirname, 'printPreview.preload.js'),
-      },
-    })
-
-    printPreviewWindow.setMenu(null)
-    if (PRINT_PREVIEW_WINDOW_VITE_DEV_SERVER_URL) {
-      printPreviewWindow.loadURL(PRINT_PREVIEW_WINDOW_VITE_DEV_SERVER_URL);
-      printPreviewWindow.webContents.openDevTools();
-    } else {
-      printPreviewWindow.loadFile(path.join(__dirname, `../renderer/${PRINT_PREVIEW_WINDOW_VITE_NAME}/index.html`));
-    }
-
-    printPreviewWindow.on('closed', () => {
-      printPreviewWindow = null
-    })
+ipcMain.on('print-preview-window:manage', (_event, { args }) => {
+  if (printPreviewWindow !== null && args === 'close') {
+    return printPreviewWindow.close()
   }
 
   if (args === 'open') {
@@ -345,69 +334,64 @@ ipcMain.on('print-preview-window:manage', (_event, { args, startTimestamp, endTi
       pageSize: 'A4'
     }, (_success, failure) => {
       if (failure) console.error(failure)
-      // if(printPreviewWindow) printPreviewWindow.close()
     })
-  }
-
-  if (args === "pdf") {
-    (async () => {
-      try {
-        if (!printPreviewWindow) createPrintPreviewWindow()
-
-        let fileName = "KLIN DRY"
-        fileName += " " + commonHelper.formatFileDate(startTimestamp, endTimestamp).toUpperCase()
-        fileName += ".pdf"
-
-        const saveDialog = await dialog.showSaveDialog({
-          title: "Simpan Sebagai PDF",
-          defaultPath: path.join(app.getPath("documents"), fileName),
-          filters: [
-            { name: "File PDF", extensions: ["pdf"] }
-          ]
-        })
-
-        if (saveDialog.canceled || !saveDialog.filePath) return
-
-        const pdfFile = await printPreviewWindow?.webContents.printToPDF({
-          pageSize: 'A4'
-        })
-
-        if (!pdfFile) throw new Error("Gagal mengenerate file PDF")
-
-        fs.writeFile(saveDialog.filePath, pdfFile, (error) => {
-          if (error) throw error
-          // if (printPreviewWindow) printPreviewWindow.close()
-        })
-      } catch (error) {
-        console.error(error)
-      }
-    })()
   }
 })
 
-ipcMain.handle('print-preview-window:get-temp-data', async (_event, args) => {
+ipcMain.handle('print-preview-window:get-temp-data', async (_event, { recordingSessionID, intervalSeconds }) => {
   try {
-    const recording_sessions_id = 83
-    const results = await tempData.selectByTimeInterval(recording_sessions_id, args)
+    const results = await tempData.selectByTimeInterval(recordingSessionID, intervalSeconds)
     return results
   } catch (error) {
     console.error(error)
   }
 })
 
-ipcMain.on('main-process:save-file', async (_event, _args) => {
-  const saveDialog = await dialog.showSaveDialog({
-    title: "Simpan Sebagai PDF",
-    defaultPath: path.join(app.getPath("documents"), "test.pdf"),
-    filters: [
+// TODO: Handle startTimestamp endTimestamp
+ipcMain.on('main-process:save-file', async (event, args: SaveFileArgs) => {
+  try {
+    const currentWindow = BrowserWindow.fromWebContents(event.sender)
+    if (!currentWindow) return
+
+    const { startTimestamp, endTimestamp, prefferedType, image } = args
+    const validFileExtensions = [".pdf", ".xlsx", ".png"]
+    
+    let defaultFileName = "KLIN DRY"
+    if (startTimestamp) defaultFileName += " " + format.fileDate(startTimestamp, endTimestamp).toUpperCase()
+    defaultFileName += prefferedType ? "." + prefferedType : ".pdf"
+
+    const fileFilter = [
       { name: "PDF (*.pdf)", extensions: ["pdf"] },
-      { name: "Excel 2007 - 365 (*.xlsx)", extensions: ["xlsx"] }
+      { name: "Excel 2007 - 365 (*.xlsx)", extensions: ["xlsx"] },
+      { name: "Gambar Grafik (*.png)", extensions: ["png"] },
     ]
-  })
 
-  console.log(saveDialog)
-  console.log(path.extname(saveDialog.filePath ?? ".what"))
+    const saveDialog = await dialog.showSaveDialog(currentWindow, {
+      title: "Simpan Data Grafik",
+      defaultPath: path.join(app.getPath("documents"), defaultFileName),
+      filters: prefferedType ? fileFilter.filter((value) => value.extensions[0] === prefferedType) : fileFilter
+    })
 
-  const recordingSessionID = 83
-  fileSaver.saveAsExcel(recordingSessionID)
+    if (saveDialog.canceled || !saveDialog.filePath) return
+    const fileExtension = path.extname(saveDialog.filePath)
+
+    if (!fileExtension || !validFileExtensions.includes(fileExtension))
+      return dialog.showErrorBox("Tipe file tidak valid", `Tipe file ${fileExtension ? "*" + fileExtension + " tidak valid" : "tidak ditemukan"}, mohon simpan file dengan tipe yang didukung (${validFileExtensions.join(", ")})`)
+
+    switch (fileExtension) {
+      case ".pdf":
+        if (!printPreviewWindow) createPrintPreviewWindow()
+        fileSaver.saveAsPDF(printPreviewWindow, saveDialog.filePath)
+        break
+      case ".xlsx":
+        fileSaver.saveAsExcel(saveDialog.filePath)
+        break
+      case ".png":
+        fileSaver.saveAsImage(mainWindow, saveDialog.filePath, image)
+        break
+    }
+  } catch (error) {
+    printPreviewWindow?.close()
+    console.error(error)
+  }
 })

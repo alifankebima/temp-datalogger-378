@@ -301,14 +301,10 @@ const tempList = [
     70.00
 ]
 
-const floatToBytes = (num: number) => {
-    const intVal = Math.round(num * 10)
+const mockTemp = (index: number): [string, string] => {
+    const intVal = Math.round(tempList[index % tempList.length] ?? 27 * 10)
     const hexVal = intVal.toString(16).padStart(4, '0')
     return [hexVal.substring(0, 2), hexVal.substring(2)];
-};
-
-const mockTemp = (index: number) => {
-    return floatToBytes(tempList[index % tempList.length] ?? 27)
 }
 
 export default mockTemp

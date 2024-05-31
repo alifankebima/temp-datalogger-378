@@ -1,7 +1,6 @@
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { PiRecordFill, PiStopFill } from "react-icons/pi";
 import { IoMdSettings, IoMdSave, IoMdPrint } from "react-icons/io";
-import { ImFilePdf } from "react-icons/im";
 import {
   LineChart,
   Line,
@@ -17,7 +16,6 @@ import NavbarButton from "../../components/NavbarButton";
 import TempDisplay from "../../components/TempDisplay";
 import legendGraph from "../../components/LegendGraph";
 import commonHelper from "../../helper/commonHelper";
-import FileSaver from "file-saver";
 import { useGenerateImage } from "recharts-to-png";
 import "../../assets/css/index.css";
 import {
@@ -46,10 +44,10 @@ const Main = () => {
 
   // Temp display states
   const defaultTemps: Temps = {
-    t1: null,
-    t2: null,
-    t3: null,
-    t4: null,
+    t1: undefined,
+    t2: undefined,
+    t3: undefined,
+    t4: undefined
   };
   const [currentTemp, setCurrentTemp] = useState<Temps>(defaultTemps);
   const [minTemp, setMinTemp] = useState<Temps>(defaultTemps);
@@ -75,28 +73,19 @@ const Main = () => {
     setIsRecording(false);
     window.electronAPImain.stopRecord(true);
   };
-  const [getDivJpeg, { ref }] = useGenerateImage<HTMLDivElement>({
-    quality: 0.8,
+  const [getDivImage, { ref }] = useGenerateImage<HTMLDivElement>({
+    quality: 1.0,
     type: "image/png",
   });
-  const saveGraphAsImage = useCallback(async () => {
-    const jpeg = await getDivJpeg();
-    if (jpeg) {
-      FileSaver.saveAs(
-        jpeg,
-        `${config?.subtitle} ${commonHelper.formatDateTime(
-          new Date().getTime()
-        )}.png`
-      );
-    }
-  }, []);
   const openSettingWindow = () =>
     window.electronAPImain.manageSettingWindow("open");
   const openPrintPreviewWindow = () =>
     window.electronAPImain.managePrintPreviewWindow({ args: "open" }); 
-  const saveGraphAsPDF = () =>
-    window.electronAPImain.saveFile({ args: "pdf" });
-
+  const saveData = async () => {
+    const png = await getDivImage();
+    window.electronAPImain.saveFile({ args: "pdf", image: png });
+  }
+    
   // Run on component mount & unmount only
   useEffect(() => {
     const timerId = setInterval(() => {
@@ -184,17 +173,17 @@ const Main = () => {
 
         <div className="border-l border-gray-400 h-16 w-0.5 mx-2" />
 
-        <NavbarButton onClick={saveGraphAsImage} disabled={!graphData.length}>
+        {/* <NavbarButton onClick={saveData} disabled={!graphData.length}>
           <IoMdSave
             className={`${
               graphData.length ? "text-sky-900" : "text-gray-300"
             } text-4xl`}
           />
           <div className="text-xs">Simpan Gambar</div>
-        </NavbarButton>
+        </NavbarButton> */}
 
-        <NavbarButton onClick={saveGraphAsPDF} disabled={!graphData.length}>
-          <ImFilePdf
+        <NavbarButton onClick={saveData} disabled={!graphData.length}>
+          <IoMdSave
             className={`${
               graphData.length ? "text-sky-900" : "text-gray-300"
             } text-4xl`}
@@ -233,7 +222,7 @@ const Main = () => {
             disabled={
               config?.t1monitor !== undefined ? !config.t1monitor : false
             }
-            className="border-b"
+            className="border-b border-b-gray-300"
           />
           <TempDisplay
             name="T2"
@@ -245,7 +234,7 @@ const Main = () => {
             disabled={
               config?.t2monitor !== undefined ? !config.t2monitor : false
             }
-            className="border-b"
+            className="border-b border-b-gray-300"
           />
           <TempDisplay
             name="T3"
@@ -257,7 +246,7 @@ const Main = () => {
             disabled={
               config?.t3monitor !== undefined ? !config.t3monitor : false
             }
-            className="border-b"
+            className="border-b border-b-gray-300"
           />
           <TempDisplay
             name="T4"
@@ -365,7 +354,7 @@ const Main = () => {
               )}
               <Tooltip
                 labelFormatter={(timestamp) =>
-                  commonHelper.formatDateTime(timestamp)
+                  new Date(timestamp).toLocaleString()
                 }
               />
               <Legend formatter={legendGraph} />
@@ -373,7 +362,7 @@ const Main = () => {
           </ResponsiveContainer>
         </div>
       </div>
-      <div className="flex bg-gray-50 border border-gray-400 text-xs text-gray-700">
+      <div className="flex bg-gray-50 border-t border-gray-400 text-xs text-gray-700">
         {/* <div className="bg-gray-50 border-gray-400 border-r border-collapse py-0.5 px-2 grow"></div> */}
         <div className="bg-gray-50 border-gray-400 border-r border-collapse py-0.5 px-2">{devicePath ? devicePath : "Mencari Perangkat"}</div>
         <div className="bg-gray-50 border-gray-400 border-collapse py-0.5 px-2">{currentDatetime}</div>

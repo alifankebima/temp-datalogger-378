@@ -17,7 +17,8 @@ const serialport = async () => {
     const port = new SerialPortStream({
       binding: MockBinding,
       path: path,
-      baudRate: 9600
+      baudRate: 9600,
+      endOnClose: true
     })
 
     return port;
