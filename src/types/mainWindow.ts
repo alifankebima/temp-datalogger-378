@@ -31,6 +31,4 @@ export interface MainWindowElectronAPI {
     removeStartRecordCallback: () => void;
     stopRecordCallback: (callback: () => void) => void;
     removeStopRecordCallback: () => void;
-    ping: () => void,
-    pong: () => void
 }

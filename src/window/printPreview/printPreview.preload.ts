@@ -7,9 +7,8 @@ const electronAPIPrintPreview: PrintPreviewWindowElectronAPI = {
     getState: () => ipcRenderer.invoke('electron-store:get', 'state'),
     getPrintPreviewConfig: () => ipcRenderer.invoke('electron-store:get', 'printPreview'),
     updatePrintPreviewConfig: (configData) => ipcRenderer.send("print-preview-window:update-config", configData),
-    // for debugging
-    ping: () => ipcRenderer.send('ping'),
-    pong: () => ipcRenderer.on('pong', (_event, _data) => console.log('pong'))
+    saveFile: (args) => ipcRenderer.send("main-process:save-file", args),
+    
 }
 
 contextBridge.exposeInMainWorld('electronAPIPrintPreview', electronAPIPrintPreview);

@@ -1,16 +1,13 @@
-import sqlite3 from 'sqlite3';
-import { app } from 'electron';
-import path from 'path';
-import commonHelper from '../helper/commonHelper';
+import sqlite3 from 'sqlite3'
+import { app } from 'electron'
+import path from 'path'
+import commonHelper from '../helper/commonHelper'
 
 const dbPath = path.join(app.getPath('userData'), 'datalogger.db')
 
-const db = new sqlite3.Database(dbPath, (error) => {
-    if (error) return console.error(error)
-    console.log("Successfully initialized database")
-})
+const db = new sqlite3.Database(dbPath, commonHelper.handleError("Error initializing database", "Successfully initialized database"))
 
-db.run('PRAGMA foreign_keys = ON;', commonHelper.handleError)
+db.run('PRAGMA foreign_keys = ON;', commonHelper.handleError("Error enabling foreign keys"))
 db.run(
     `CREATE TABLE IF NOT EXISTS recording_sessions(
         id integer primary key AUTOINCREMENT NOT NULL,
@@ -26,7 +23,8 @@ db.run(
         updated_at integer,
         deleted_at integer
     );`
-, commonHelper.handleError)
+    , commonHelper.handleError("Error creating recording_sessions table")
+)
 db.run(
     `CREATE TABLE IF NOT EXISTS temp_data(
         id integer primary key AUTOINCREMENT NOT NULL,
@@ -40,6 +38,7 @@ db.run(
         deleted_at integer,
         foreign key (recording_sessions_id) references recording_sessions(id)
     );`
-, commonHelper.handleError)
+    , commonHelper.handleError("Error creating temp_data table")
+)
 
 export default db

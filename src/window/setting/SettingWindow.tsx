@@ -10,6 +10,7 @@ import {
   SettingWindowElectronAPI,
   graphSettingForm,
 } from "../../types/settingWindow";
+import SimpleButton from "../../components/SimpleButton";
 
 declare global {
   interface Window {
@@ -102,20 +103,11 @@ const SettingWindow = () => {
               className="block p-2.5 w-full text-sm  bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 resize-none"
             ></textarea>
           </div>
-          <div className="flex justify-end items-end mt-4">
-            <button
-              type="button"
-              onClick={closeSettingWindow}
-              className=" text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-            >
+          <div className="flex gap-2 justify-end items-end mt-4">
+            <SimpleButton onClick={closeSettingWindow}>OK</SimpleButton>
+            <SimpleButton type={"submit"} onClick={closeSettingWindow}>
               Batal
-            </button>
-            <button
-              type="submit"
-              className=" text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-            >
-              Terapkan
-            </button>
+            </SimpleButton>
           </div>
         </form>
       </CustomTabPanel>
@@ -127,3 +119,4 @@ const SettingWindow = () => {
 };
 
 export default SettingWindow;
+

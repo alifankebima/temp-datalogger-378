@@ -34,11 +34,22 @@ const isPastMidnight = (startTimestamp?: number, endTimestamp?: number): boolean
     return startDate.toDateString() === endDate.toDateString()
 }
 
+const handleError = (errorMessage?: string, successMessage?: string) => {
+    return (error?: Error | null) => {
+        if (error) {
+            errorMessage ? console.error(errorMessage, error) : console.error(error)
+            throw error
+        }
+        if (successMessage) console.log(successMessage)
+    }
+}
+
 export default {
     parseTemp,
     calcMin,
     shiftNumToArray,
     calcAvgArray,
     calcMax,
-    isPastMidnight
+    isPastMidnight,
+    handleError
 }

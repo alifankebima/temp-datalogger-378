@@ -83,7 +83,7 @@ const Main = () => {
     window.electronAPImain.managePrintPreviewWindow({ args: "open" }); 
   const saveData = async () => {
     const png = await getDivImage();
-    window.electronAPImain.saveFile({ args: "pdf", image: png });
+    window.electronAPImain.saveFile({ image: png });
   }
     
   // Run on component mount & unmount only
@@ -92,8 +92,6 @@ const Main = () => {
       setCurrentDatetime(new Date().toLocaleString());
     }, 1000);
 
-    window.electronAPImain.ping();
-    window.electronAPImain.pong();
     window.electronAPImain.updateGraph((data) => setGraphData(data));
     window.electronAPImain.updateDevicePath((data) => setDevicePath(data));
     window.electronAPImain.updateTempDisplay((data) => {
@@ -131,15 +129,6 @@ const Main = () => {
       setIsRecording(false);
     });
 
-    // Load previous record data, in case of app crash
-    // (async () => {
-    //   const fetchDownsampledData = await ipcRenderer.invoke("database", {
-    //     command: "fetch-downsampled",
-    //   });
-
-    //   if (fetchDownsampledData.length) setGraphData(fetchDownsampledData);
-    // })();
-
     return () => {
       clearInterval(timerId);
       window.electronAPImain.removeUpdateGraph();
@@ -173,14 +162,6 @@ const Main = () => {
 
         <div className="border-l border-gray-400 h-16 w-0.5 mx-2" />
 
-        {/* <NavbarButton onClick={saveData} disabled={!graphData.length}>
-          <IoMdSave
-            className={`${
-              graphData.length ? "text-sky-900" : "text-gray-300"
-            } text-4xl`}
-          />
-          <div className="text-xs">Simpan Gambar</div>
-        </NavbarButton> */}
 
         <NavbarButton onClick={saveData} disabled={!graphData.length}>
           <IoMdSave
@@ -188,7 +169,7 @@ const Main = () => {
               graphData.length ? "text-sky-900" : "text-gray-300"
             } text-4xl`}
           />
-          <div className="text-xs">Simpan</div>
+          <div className="text-sm">Simpan</div>
         </NavbarButton>
 
         <NavbarButton
@@ -200,7 +181,7 @@ const Main = () => {
               graphData.length ? "text-indigo-900" : "text-gray-300"
             } text-4xl`}
           />
-          <div className="text-xs">Print</div>
+          <div className="text-sm">Print</div>
         </NavbarButton>
 
         <div className="border-l border-gray-400 h-16 w-0.5 mx-2" />

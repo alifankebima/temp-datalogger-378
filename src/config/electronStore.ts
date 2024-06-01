@@ -8,31 +8,15 @@ const store = new Store<StoreSchema>({
             type: 'object',
             properties: {
                 // Graph configuration
-                title: {
-                    type: 'string'
-                },
-                subtitle: {
-                    type: 'string'
-                },
-                minGraphTemp: {
-                    type: 'number'
-                },
-                maxGraphTemp: {
-                    type: 'number'
-                },
+                title: { type: 'string' },
+                subtitle: { type: 'string' },
+                minGraphTemp: { type: 'number' },
+                maxGraphTemp: { type: 'number' },
                 // Sensor monitoring configuration
-                t1monitor: {
-                    type: 'boolean'
-                },
-                t2monitor: {
-                    type: 'boolean'
-                },
-                t3monitor: {
-                    type: 'boolean'
-                },
-                t4monitor: {
-                    type: 'boolean'
-                },
+                t1monitor: { type: 'boolean' },
+                t2monitor: { type: 'boolean' },
+                t3monitor: { type: 'boolean' },
+                t4monitor: { type: 'boolean' },
             },
             default: {
                 title: '',
@@ -48,15 +32,9 @@ const store = new Store<StoreSchema>({
         state: {
             type: 'object',
             properties: {
-                isRecording: {
-                    type: 'boolean'
-                },
-                isStopRecordingManually: {
-                    type: 'boolean'
-                },
-                recordingSessionID: {
-                    type: 'number'
-                }
+                isRecording: { type: 'boolean' },
+                isStopRecordingManually: { type: 'boolean' },
+                recordingSessionID: { type: 'number' }
             },
             default: {
                 isRecording: false,
@@ -65,8 +43,8 @@ const store = new Store<StoreSchema>({
             }
         },
         devicePath: {
-            type:'string',
-            default:''
+            type: 'string',
+            default: ''
         },
         printPreview: {
             type: 'object',
@@ -74,12 +52,8 @@ const store = new Store<StoreSchema>({
                 sampleInterval: {
                     type: 'object',
                     properties: {
-                        name: {
-                            type: 'string',
-                        },
-                        value: {
-                            type: 'number',
-                        }
+                        name: { type: 'string', },
+                        value: { type: 'number', }
                     },
                 }
             },
@@ -93,6 +67,11 @@ const store = new Store<StoreSchema>({
     }
 })
 
+store.set('state', {
+    isRecording: false,
+    isStopRecordingManually: false,
+    recordingSessionID: 0,
+})
 store.set('devicePath', '')
 
 export default store;

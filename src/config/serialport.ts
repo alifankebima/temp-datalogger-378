@@ -8,11 +8,9 @@ const serialport = async () => {
     const targetDevice = ports.find(port => port.manufacturer?.includes('Silicon Labs'))
     if (!targetDevice) {
       console.log("Target device not found, devices list : \n", ports.map(port => port.manufacturer?.split('\\')[0]).join(", "))
-      // store.set('state.devicePath', '')
+      store.set('state.devicePath', '')
       return null
     }
-
-    store.set('devicePath', targetDevice.path)
 
     const port = new SerialPort({
       path: targetDevice.path,
@@ -20,6 +18,7 @@ const serialport = async () => {
     }, (error) => {
       console.error(error)
     });
+    store.set('devicePath', port.path)
 
     return port;
   } catch (error) {

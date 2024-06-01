@@ -1,5 +1,6 @@
 import { SerialPortStream } from '@serialport/stream';
 import { MockBinding } from '@serialport/binding-mock';
+import store from './electronStore';
 
 const serialport = async () => {
   try {
@@ -20,7 +21,7 @@ const serialport = async () => {
       baudRate: 9600,
       endOnClose: true
     })
-
+    store.set('devicePath', port.path)
     return port;
   } catch (error) {
     console.error("Error creating mock device : ", error)

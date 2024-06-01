@@ -3,7 +3,6 @@ import { PrintPreviewWindowElectronAPI } from "../../types/printPreviewWindow";
 import SimpleButton from "../../components/SimpleButton";
 import Dropdown from "../../components/Dropdown";
 import { GraphData } from "../../types/mainWindow";
-import commonHelper from "../../helper/commonHelper";
 import logoGrayscale from "../../assets/img/logoGrayscale.png";
 import { DropdownItems } from "../../types/dropdown";
 import format from "../../helper/format";
@@ -73,8 +72,8 @@ const printPreviewWindow = () => {
     window.electronAPIPrintPreview.managePrintPreviewWindow({ args: "close" });
 
   const handleSaveAsPDF = () =>
-    window.electronAPIPrintPreview.managePrintPreviewWindow({
-      args: "pdf",
+    window.electronAPIPrintPreview.saveFile({
+      prefferedType: "pdf",
       startTimestamp: entryTimestamp,
       endTimestamp: exitTimestamp,
     });

@@ -17,6 +17,5 @@ export interface PrintPreviewWindowElectronAPI {
     getPrintPreviewConfig: () => Promise<StoreSchema["printPreview"]>;
     getState: () => Promise<StoreSchema["state"]>;
     updatePrintPreviewConfig: (configData: PrintPreviewConfing) => void;
-    ping: () => void,
-    pong: () => void
+    saveFile: (args: unknown) => void;
 }

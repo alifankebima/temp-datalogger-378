@@ -75,7 +75,7 @@ app.on('window-all-closed', () => {
     recordingSessions.softDeleteAllData()
   }
 
-  db.close((error) => error ? console.log("Database closed") : console.error("e"))
+  db.close(commonHelper.handleError("Error closing database", "Successfully closed database"))
 
   port?.close()
   store.reset('devicePath')
