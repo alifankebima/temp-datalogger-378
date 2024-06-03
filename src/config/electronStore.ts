@@ -8,39 +8,59 @@ const store = new Store<StoreSchema>({
             type: 'object',
             properties: {
                 // Graph configuration
-                title: { type: 'string' },
-                subtitle: { type: 'string' },
-                minGraphTemp: { type: 'number' },
-                maxGraphTemp: { type: 'number' },
+                title: {
+                    type: 'string',
+                    default: ''
+                },
+                subtitle: {
+                    type: 'string',
+                    default: ''
+                },
+                minGraphTemp: {
+                    type: 'number',
+                    default: 20
+                },
+                maxGraphTemp: {
+                    type: 'number',
+                    default: 80
+                },
                 // Sensor monitoring configuration
-                t1monitor: { type: 'boolean' },
-                t2monitor: { type: 'boolean' },
-                t3monitor: { type: 'boolean' },
-                t4monitor: { type: 'boolean' },
+                t1monitor: {
+                    type: 'boolean',
+                    default: true
+                },
+                t2monitor: {
+                    type: 'boolean',
+                    default: false
+                },
+                t3monitor: {
+                    type: 'boolean',
+                    default: true
+                },
+                t4monitor: {
+                    type: 'boolean',
+                    default: true
+                },
             },
-            default: {
-                title: '',
-                subtitle: '',
-                minGraphTemp: 20,
-                maxGraphTemp: 80,
-                t1monitor: true,
-                t2monitor: false,
-                t3monitor: true,
-                t4monitor: true
-            }
+            default: {}
         },
         state: {
             type: 'object',
             properties: {
-                isRecording: { type: 'boolean' },
-                isStopRecordingManually: { type: 'boolean' },
-                recordingSessionID: { type: 'number' }
+                isRecording: {
+                    type: 'boolean',
+                    default: false
+                },
+                isStopRecordingManually: {
+                    type: 'boolean',
+                    default: false
+                },
+                recordingSessionID: {
+                    type: 'number',
+                    default: 0
+                }
             },
-            default: {
-                isRecording: false,
-                isStopRecordingManually: false,
-                recordingSessionID: 0,
-            }
+            default: {}
         },
         devicePath: {
             type: 'string',
@@ -52,26 +72,21 @@ const store = new Store<StoreSchema>({
                 sampleInterval: {
                     type: 'object',
                     properties: {
-                        name: { type: 'string', },
-                        value: { type: 'number', }
+                        name: {
+                            type: 'string',
+                            default: "1 Jam"
+                        },
+                        value: {
+                            type: 'number',
+                            default: 3600
+                        }
                     },
+                    default: {}
                 }
             },
-            default: {
-                sampleInterval: {
-                    name: "1 Jam",
-                    value: 3600
-                }
-            }
+            default: {}
         }
     }
 })
-
-store.set('state', {
-    isRecording: false,
-    isStopRecordingManually: false,
-    recordingSessionID: 0,
-})
-store.set('devicePath', '')
 
 export default store;

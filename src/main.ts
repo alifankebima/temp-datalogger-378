@@ -69,8 +69,7 @@ app.on('window-all-closed', () => {
   if (process.platform === 'darwin') return
 
   // Cleanup
-  if (store.get('store.isStopRecordManually')) {
-
+  if (store.get('state').isStopRecordingManually) {
     tempData.softDeleteAllData()
     recordingSessions.softDeleteAllData()
   }
@@ -78,8 +77,8 @@ app.on('window-all-closed', () => {
   db.close(commonHelper.handleError("Error closing database", "Successfully closed database"))
 
   port?.close()
-  store.reset('devicePath')
   store.reset('state')
+  store.reset('devicePath')
   ipcMain.removeAllListeners('main-window:console-log')
   ipcMain.removeAllListeners('main-window:start-record')
   ipcMain.removeAllListeners('main-window:stop-record')
@@ -160,8 +159,8 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
     mainWindow?.webContents.send('main-window:update-temp-display', parsedTemp)
 
     try {
-      const recordingSessionID = parseInt(store.get('state.recordingSessionID') ?? 0)
-      if (!store.get('state.isRecording') || !recordingSessionID) return
+      const recordingSessionID = store.get('state').recordingSessionID
+      if (!store.get('state').isRecording || !recordingSessionID) return
 
       await tempData.insertData({
         recording_sessions_id: recordingSessionID,
@@ -178,7 +177,7 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
 }
 
 app.on('ready', () => {
-  console.log(store.get('state'))
+  // console.log(store.get('state'))
   createMainWindow()
   initSerialDevice(isMockPort)
 });
@@ -222,8 +221,8 @@ ipcMain.on("main-window:start-record", async (event, isDataExists: boolean) => {
 
     if (userResponse === 0 || !isDataExists) {
       await recordingSessions.insertData({
-        graph_title: store.get('config.title'),
-        graph_subtitle: store.get('config.subtitle')
+        graph_title: store.get('config').title,
+        graph_subtitle: store.get('config').subtitle
       })
     }
 
@@ -231,7 +230,7 @@ ipcMain.on("main-window:start-record", async (event, isDataExists: boolean) => {
     console.log(result)
 
     store.set('state.recordingSessionID', result?.id ?? 0)
-    console.log('recording session ' + store.get('state.recordingSessionID'))
+    console.log('recording session ' + store.get('state').recordingSessionID)
   }
 });
 
