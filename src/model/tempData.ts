@@ -1,5 +1,6 @@
-import { GraphData } from '../types/mainWindow';
+import { GraphData } from '../types/tempData';
 import db from '../config/sqlite';
+import { Seconds } from '../types/unit';
 
 interface InsertData {
     recording_sessions_id: number,
@@ -61,9 +62,9 @@ const selectBySampleSize = (recording_sessions_id: number, sampleSize: number = 
     })
 }
 
-const selectByTimeInterval = (recording_sessions_id: number, intervalSeconds: number = 3600) => {
+const selectByTimeInterval = (recording_sessions_id: number, interval: Seconds = 3600) => {
     const rowThresholdMilliseconds = 900000
-    console.log(intervalSeconds)
+
     return new Promise<GraphData[]>((resolve, reject) => {
         db.all<GraphData>(
             `WITH td AS (
@@ -86,7 +87,7 @@ const selectByTimeInterval = (recording_sessions_id: number, intervalSeconds: nu
                     SELECT rownum FROM second_to_last_row WHERE (SELECT max(created_at) FROM td) < created_at + ?
                 )
             ) ORDER BY created_at ASC;`,
-            [recording_sessions_id, intervalSeconds, rowThresholdMilliseconds],
+            [recording_sessions_id, interval, rowThresholdMilliseconds],
             (error, rows) => error ? reject(error) : resolve(rows)
         )
     })

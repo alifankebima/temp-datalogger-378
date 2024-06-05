@@ -7,10 +7,11 @@ import Box from "@mui/material/Box";
 import CustomTabPanel from "../../components/CustomTabPanel";
 
 import {
-  SettingWindowElectronAPI,
-  graphSettingForm,
-} from "../../types/settingWindow";
+  SettingWindowElectronAPI
+} from "../../types/renderer";
 import SimpleButton from "../../components/SimpleButton";
+import { FormControlLabel, Switch } from "@mui/material";
+import { StoreSchema } from "../../types/electronStore";
 
 declare global {
   interface Window {
@@ -19,23 +20,28 @@ declare global {
 }
 
 const SettingWindow = () => {
-  const [value, setValue] = React.useState(0);
-  const [config, setConfig] = useState<graphSettingForm>({
+  const [value, setValue] = React.useState(2);
+  const [config, setConfig] = useState<StoreSchema["config"]>({
     title: "",
     subtitle: "",
+    minGraphTemp: 20,
+    maxGraphTemp: 80,
+    t1monitor: true,
+    t2monitor: true,
+    t3monitor: true,
+    t4monitor: true,
+    stopRecordAutomatically: false,
+    targetTemp: 65,
   });
 
   useEffect(() => {
     (async () => {
       const result = await window.electronAPISetting.getConfig();
-      setConfig({
-        title: result.title ?? "",
-        subtitle: result.subtitle ?? "",
-      });
+      setConfig(result);
     })();
   }, []);
 
-  const handleChangeTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig((prevState) => ({
       ...prevState,
       [e.target.name]: e.target.value,
@@ -49,9 +55,16 @@ const SettingWindow = () => {
     }));
   };
 
+  const handleSwitch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfig((prevState) => ({
+      ...prevState,
+      [e.target.name]: e.target.checked,
+    }));
+  };
+
   const handleApplySetting = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    window.electronAPISetting.updateConfig(config);
+    window.electronAPISetting.setConfig(config);
     window.electronAPISetting.manageSettingWindow("close");
   };
 
@@ -63,15 +76,16 @@ const SettingWindow = () => {
   };
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <div className="flex flex-col h-screen">
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={value} onChange={handleTabs}>
           <Tab label="Grafik" />
-          {/* <Tab label="Notifikasi" /> */}
+          <Tab label="Monitoring" />
+          <Tab label="Perekaman" />
         </Tabs>
       </Box>
-      <CustomTabPanel value={value} index={0}>
-        <form onSubmit={handleApplySetting}>
+      <form onSubmit={handleApplySetting} className="flex flex-col grow">
+        <CustomTabPanel value={value} index={0} className="grow">
           <div>
             <label
               htmlFor="title"
@@ -82,7 +96,7 @@ const SettingWindow = () => {
             <input
               type="text"
               name="title"
-              onChange={handleChangeTitle}
+              onChange={handleInput}
               value={config.title}
               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5"
             />
@@ -103,18 +117,146 @@ const SettingWindow = () => {
               className="block p-2.5 w-full text-sm  bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 resize-none"
             ></textarea>
           </div>
-          <div className="flex gap-2 justify-end items-end mt-4">
-            <SimpleButton onClick={closeSettingWindow}>OK</SimpleButton>
-            <SimpleButton type={"submit"} onClick={closeSettingWindow}>
-              Batal
-            </SimpleButton>
+        </CustomTabPanel>
+        <CustomTabPanel value={value} index={1} className="grow">
+          <div className="flex flex-col gap-4">
+            <div className="">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium me-4"
+              >
+                T1
+              </label>
+              <div className="inline-flex items-center">
+                <FormControlLabel
+                  control={
+                    <Switch
+                      name="t1monitor"
+                      checked={config.t1monitor}
+                      onChange={handleSwitch}
+                    />
+                  }
+                  label="Monitor"
+                />
+              </div>
+            </div>
+
+            <div className="">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium me-4"
+              >
+                T2
+              </label>
+              <div className="inline-flex items-center">
+                <FormControlLabel
+                  control={
+                    <Switch
+                      name="t2monitor"
+                      checked={config.t2monitor}
+                      onChange={handleSwitch}
+                    />
+                  }
+                  label="Monitor"
+                />
+              </div>
+            </div>
+            <div className="">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium me-4"
+              >
+                T3
+              </label>
+              <div className="inline-flex items-center">
+                <FormControlLabel
+                  control={
+                    <Switch
+                      name="t3monitor"
+                      checked={config.t3monitor}
+                      onChange={handleSwitch}
+                    />
+                  }
+                  label="Monitor"
+                />
+              </div>
+            </div>
+            <div className="">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium me-4"
+              >
+                T4
+              </label>
+              <div className="inline-flex items-center">
+                <FormControlLabel
+                  control={
+                    <Switch
+                      name="t4monitor"
+                      checked={config.t4monitor}
+                      onChange={handleSwitch}
+                    />
+                  }
+                  label="Monitor"
+                />
+              </div>
+            </div>
           </div>
-        </form>
-      </CustomTabPanel>
-      {/* <CustomTabPanel value={value} index={1}>
-        Notifikasi
-      </CustomTabPanel> */}
-    </Box>
+        </CustomTabPanel>
+        <CustomTabPanel value={value} index={2} className="grow">
+          <div className="flex flex-col gap-4">
+            <div className="">
+              <div className="inline-flex items-center">
+                <FormControlLabel
+                  control={
+                    <Switch
+                      name="stopRecordAutomatically"
+                      checked={config.stopRecordAutomatically}
+                      onChange={handleSwitch}
+                    />
+                  }
+                  label="Hentikan Rekaman Secara Otomatis"
+                />
+              </div>
+              {!config.stopRecordAutomatically && (
+                <>
+                  <div className="flex items-center ms-8 my-2">
+                    <div className="text-nowrap text-sm mx-4">Target Suhu</div>
+                    <input
+                      type="number"
+                      name="targetTemp"
+                      onChange={handleInput}
+                      value={config.targetTemp}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-16 text-right p-2"
+                    />
+                    <div className="mx-2 text-sm">&#176;C</div>
+                  </div>
+                  <div className="flex items-center ms-8 my-2">
+                    <div className="text-nowrap text-sm mx-4">
+                      Tetap merekam setelah mencapai target selama
+                    </div>
+                    <input
+                      type="number"
+                      name="targetTemp"
+                      onChange={handleInput}
+                      value={config.targetTemp}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-16 text-right p-2"
+                    />
+                    <div className="mx-2 text-sm">Menit</div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </CustomTabPanel>
+        <div className="flex gap-2 justify-end items-end me-6 mb-6">
+          <SimpleButton type={"submit"} onClick={closeSettingWindow}>
+            OK
+          </SimpleButton>
+          <SimpleButton onClick={closeSettingWindow}>Batal</SimpleButton>
+        </div>
+      </form>
+    </div>
   );
 };
 

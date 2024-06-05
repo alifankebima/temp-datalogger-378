@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { PrintPreviewWindowElectronAPI } from "../../types/printPreviewWindow";
+import { PrintPreviewWindowElectronAPI } from "../../types/renderer";
 import SimpleButton from "../../components/SimpleButton";
 import Dropdown from "../../components/Dropdown";
-import { GraphData } from "../../types/mainWindow";
+import { GraphData } from "../../types/tempData";
 import logoGrayscale from "../../assets/img/logoGrayscale.png";
-import { DropdownItems } from "../../types/dropdown";
+import { DropdownItem } from "../../types/sampleInterval";
 import format from "../../helper/format";
 
 declare global {
@@ -20,7 +20,7 @@ const printPreviewWindow = () => {
     duration: "",
   });
   const [data, setData] = useState<GraphData[]>([]);
-  const [sampleInterval, setSampleInterval] = useState<DropdownItems>({
+  const [sampleInterval, setSampleInterval] = useState<DropdownItem>({
     name: "1 Jam",
     value: 3600,
   });
@@ -39,7 +39,7 @@ const printPreviewWindow = () => {
   useEffect(() => {
     (async () => {
       const state = await window.electronAPIPrintPreview.getState()
-      const result = await window.electronAPIPrintPreview.getTempData(
+      const result = await window.electronAPIPrintPreview.getGraphData(
         state.recordingSessionID,
         sampleInterval.value
       );
@@ -58,9 +58,9 @@ const printPreviewWindow = () => {
     })();
   }, [sampleInterval.value]);
 
-  const handleDropdownChange = (option: DropdownItems) => {
+  const handleDropdownChange = (option: DropdownItem) => {
     setSampleInterval(option)
-    window.electronAPIPrintPreview.updatePrintPreviewConfig({sampleInterval: option})
+    window.electronAPIPrintPreview.setPrintPreviewConfig({sampleInterval: option})
   }
 
   const handlePrint = () =>
@@ -159,11 +159,11 @@ const printPreviewWindow = () => {
                 <th className="border border-black">No</th>
                 <th className="border border-black">Tanggal</th>
                 <th className="border border-black">Waktu</th>
-                <th className="border border-black">T1</th>
-                <th className="border border-black">T2</th>
-                <th className="border border-black">T3</th>
-                <th className="border border-black">T4</th>
-                <th className="border border-black">MC</th>
+                <th className="border border-black w-12">T1</th>
+                <th className="border border-black w-12">T2</th>
+                <th className="border border-black w-12">T3</th>
+                <th className="border border-black w-12">T4</th>
+                <th className="border border-black w-12">MC</th>
               </tr>
             </thead>
             <tbody className="text-center">

@@ -19,11 +19,11 @@ import commonHelper from "../../helper/commonHelper";
 import { useGenerateImage } from "recharts-to-png";
 import "../../assets/css/index.css";
 import {
-  MainWindowElectronAPI,
   GraphData,
   Temps,
-} from "../../types/mainWindow";
+} from "../../types/tempData";
 import { StoreSchema } from "../../types/electronStore";
+import { MainWindowElectronAPI } from "../../types/renderer";
 
 declare global {
   interface Window {
@@ -131,11 +131,7 @@ const Main = () => {
 
     return () => {
       clearInterval(timerId);
-      window.electronAPImain.removeUpdateGraph();
-      window.electronAPImain.removeUpdateTempDisplay();
-      window.electronAPImain.removeUpdateConfig();
-      window.electronAPImain.removeStartRecordCallback();
-      window.electronAPImain.removeStopRecordCallback();
+      window.electronAPImain.removeWindowListeners()
     };
   }, []);
 

@@ -1,10 +1,10 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { SettingWindowElectronAPI } from "../../types/settingWindow";
+import { SettingWindowElectronAPI } from "../../types/renderer";
 
 const electronAPISetting: SettingWindowElectronAPI = {
     getConfig: () => ipcRenderer.invoke('electron-store:get', 'config'),
+    setConfig: (newData) => ipcRenderer.send("electron-store:set", {key: 'config', value: newData}),
     manageSettingWindow: (manage) => ipcRenderer.send("setting-window:manage", manage),
-    updateConfig: (configData) => ipcRenderer.send("setting-window:update-config", configData)
 }
 
 contextBridge.exposeInMainWorld('electronAPISetting', electronAPISetting);

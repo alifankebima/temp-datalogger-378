@@ -6,19 +6,21 @@ interface CustomTabPanelProps {
   children: React.ReactNode,
   value: number,
   index: number,
+  className?: string
 }
 
-const CustomTabPanel: React.FC<CustomTabPanelProps> = ({ children, value, index, ...other }) => {
+const CustomTabPanel: React.FC<CustomTabPanelProps> = ({ children, value, index,  className, ...other }) => {
   return (
     <div
       role="tabpanel"
       hidden={value !== index}
       id={`simple-tabpanel-${index}`}
       aria-labelledby={`simple-tab-${index}`}
+      className={className}
       {...other}
     >
       {value === index && (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ m: 3 }}>
           {children}
         </Box>
       )}

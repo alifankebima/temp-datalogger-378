@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { dropdownItems, DropdownItems } from "../types/dropdown";
+import { dropdownItems, DropdownItem } from "../types/dropdown";
 import { IoMdArrowDropdown } from "react-icons/io";
 import SimpleButton from "./SimpleButton";
 
 interface Props {
-  onChange: (option: DropdownItems) => void;
+  onChange: (option: DropdownItem) => void;
   selectedOption: {
     name: string
     value: number
@@ -21,7 +21,7 @@ const Dropdown: React.FC<Props> = ({ selectedOption, onChange }) => {
 
   const toggleDropdown = () => setIsOpen((prev) => !prev);
 
-  const handleSelected = (option: DropdownItems) => {
+  const handleSelected = (option: DropdownItem) => {
     onChange(option);
     setIsOpen(false);
   };

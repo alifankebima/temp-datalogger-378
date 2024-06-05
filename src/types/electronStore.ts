@@ -1,7 +1,7 @@
-import { DropdownItems } from "./dropdown";
+import { DropdownItem } from "./sampleInterval";
 
-export interface StoreSchema {
-    config:{
+interface StoreSchema {
+    config: {
         title: string;
         subtitle: string;
         minGraphTemp: number;
@@ -10,6 +10,8 @@ export interface StoreSchema {
         t2monitor: boolean;
         t3monitor: boolean;
         t4monitor: boolean;
+        stopRecordAutomatically: boolean;
+        targetTemp: number
     },
     state: {
         isRecording: boolean,
@@ -18,6 +20,10 @@ export interface StoreSchema {
     },
     devicePath: string,
     printPreview: {
-        sampleInterval: DropdownItems
+        sampleInterval: DropdownItem
     }
+}
+
+export {
+    StoreSchema,
 }

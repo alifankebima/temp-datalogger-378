@@ -41,6 +41,14 @@ const store = new Store<StoreSchema>({
                     type: 'boolean',
                     default: true
                 },
+                stopRecordAutomatically: {
+                    type: 'boolean',
+                    default: false
+                },
+                targetTemp: {
+                    type: 'number',
+                    default: 65
+                }
             },
             default: {}
         },

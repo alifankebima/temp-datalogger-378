@@ -14,15 +14,15 @@ interface UpdateData extends InsertData {
     end_date?: number
 }
 
-interface SelectData extends UpdateData {
+export interface RecordingSession extends UpdateData {
     start_date: number,
     created_at: number,
     updated_at?: number
 }
 
 const fetchLastData = () => {
-    return new Promise<SelectData | undefined>((resolve, reject) => {
-        db.get<SelectData>(
+    return new Promise<RecordingSession | undefined>((resolve, reject) => {
+        db.get<RecordingSession>(
             `SELECT 
             id, graph_title, graph_subtitle, start_date, end_date, 
             product_type_wood, product_type_pallet, qty_pcs, qty_m3, 

@@ -1,4 +1,4 @@
-export const dropdownItems = [
+const dropdownItems = [
     {
         name: "15 Menit",
         value: 900,
@@ -41,8 +41,13 @@ export const dropdownItems = [
     },
 ] as const;
 
-export interface DropdownItems {
+interface DropdownItem {
     name: typeof dropdownItems[number]['name'];
     value: typeof dropdownItems[number]['value'];
 }
 
+export {
+    dropdownItems,
+    DropdownItem
+}
+ 

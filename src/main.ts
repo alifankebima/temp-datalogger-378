@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 import recordingSessions from './model/recordingSessions';
-import { graphSettingForm } from './types/settingWindow';
+// import { graphSettingForm } from './types/settingWindow';
 import serialCommand from './helper/serialCommand';
 import commonHelper from './helper/commonHelper';
 import fileSaver from './helper/fileSaver';
@@ -14,13 +14,13 @@ import customMenuTemplate from './config/menu';
 import serialport from './config/serialport';
 import serialmock from './config/serialmock';
 import store from './config/electronStore';
-import { Temps } from './types/mainWindow';
+import { Temps } from './types/tempData';
 import mockTemp from './helper/mockTemp';
 import tempData from './model/tempData';
 import db from './config/sqlite';
-import { PrintPreviewConfing } from './types/printPreviewWindow';
 import { SaveFileArgs } from './types/main';
 import format from './helper/format';
+import { StoreSchema } from './types/electronStore';
 
 dotenv.config()
 
@@ -159,12 +159,16 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
     mainWindow?.webContents.send('main-window:update-temp-display', parsedTemp)
 
     try {
+      const config = store.get('config')
       const recordingSessionID = store.get('state').recordingSessionID
       if (!store.get('state').isRecording || !recordingSessionID) return
 
       await tempData.insertData({
         recording_sessions_id: recordingSessionID,
-        ...parsedTemp
+        t1: config.t1monitor ? parsedTemp.t1 : undefined,
+        t2: config.t2monitor ? parsedTemp.t2 : undefined,
+        t3: config.t3monitor ? parsedTemp.t3 : undefined,
+        t4: config.t4monitor ? parsedTemp.t4 : undefined
       })
 
       const fetchGraphData = await tempData.selectBySampleSize(recordingSessionID, 100);
@@ -189,6 +193,10 @@ store.onDidChange('devicePath', (newValue) => {
   mainWindow?.webContents.send('main-window:update-status-bar', {
     devicePath: newValue
   })
+})
+
+store.onDidChange('config', (newValue) =>{
+  mainWindow?.webContents.send('main-window:update-config', newValue)
 })
 
 ipcMain.on("main-window:start-record", async (event, isDataExists: boolean) => {
@@ -279,14 +287,7 @@ ipcMain.on('setting-window:manage', (_event, args) => {
   }
 })
 
-
-
-ipcMain.on('setting-window:update-config', (_event, newConfigData: graphSettingForm) => {
-  store.set('config', newConfigData)
-  mainWindow?.webContents.send('main-window:update-config', store.get('config'))
-})
-
-ipcMain.on('print-preview-window:update-config', (_event, newConfigData: PrintPreviewConfing) => {
+ipcMain.on('print-preview-window:update-config', (_event, newConfigData: StoreSchema['printPreview']) => {
   store.set('printPreview', newConfigData)
 })
 

@@ -53,21 +53,21 @@ const TempDisplay: React.FC<TempDisplayProps> = ({
               : "text-4xl text-center mx-auto"
           }`}
         >
-          {tempLimit(currentTemp)}&#176;{unit}
+          {tempLimit(disabled ? null : currentTemp)}&#176;{unit}
         </div>
       </div>
       <div className="flex justify-between pt-2 me-6 text-xs text-gray-500">
         <div>
           MIN:
-          <br /> {tempLimit(minTemp)}&#176;{unit}
+          <br /> {tempLimit(disabled ? null : minTemp)}&#176;{unit}
         </div>
         <div>
           AVG:
-          <br /> {tempLimit(avgTemp)}&#176;{unit}
+          <br /> {tempLimit(disabled ? null : avgTemp)}&#176;{unit}
         </div>
         <div>
           MAX:
-          <br /> {tempLimit(maxTemp)}&#176;{unit}
+          <br /> {tempLimit(disabled ? null : maxTemp)}&#176;{unit}
         </div>
       </div>
     </div>
