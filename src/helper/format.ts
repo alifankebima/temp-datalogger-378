@@ -1,3 +1,5 @@
+import { Milliseconds } from "../types/unit"
+
 const d: Intl.DateTimeFormatOptions = { day: 'numeric' }
 const dm: Intl.DateTimeFormatOptions = { ...d, month: 'long' }
 const dmy: Intl.DateTimeFormatOptions = { ...dm, year: 'numeric' }
@@ -6,7 +8,7 @@ const dmy: Intl.DateTimeFormatOptions = { ...dm, year: 'numeric' }
 // 31 Desember 2024 - 1 Januari 2025
 // 31 Mei - 1 Juni 2024
 // 15 Juli 2024
-const fileDate = (startTimestamp?: number, endTimestamp?: number): string => {
+const fileDate = (startTimestamp?: Milliseconds, endTimestamp?: Milliseconds): string => {
     if (!startTimestamp) return ""
     const startDate = new Date(startTimestamp)
 
@@ -26,7 +28,7 @@ const fileDate = (startTimestamp?: number, endTimestamp?: number): string => {
 }
 
 // Example : Jumat, 24 Mei 2024
-const date = (timestamp?: number): string => {
+const date = (timestamp?: Milliseconds): string => {
     if (!timestamp) return ""
     const date = new Date(timestamp)
 
@@ -37,7 +39,7 @@ const date = (timestamp?: number): string => {
 }
 
 // Example : 10:04:32
-const time = (timestamp?: number): string => {
+const time = (timestamp?: Milliseconds): string => {
     if (!timestamp) return ""
     const date = new Date(timestamp)
 
@@ -50,13 +52,13 @@ const time = (timestamp?: number): string => {
 }
 
 // Example : 1 Hari, 2 Jam, 3 Menit, 4 Detik
-const duration = (timeMilliseconds?: number): string => {
-    if (!timeMilliseconds) return ""
-
-    const days = Math.floor(timeMilliseconds / 86400000)
-    const hours = Math.floor(timeMilliseconds / 3600000) % 24
-    const minutes = Math.floor(timeMilliseconds / 60000) % 60
-    const seconds = Math.floor(timeMilliseconds / 1000) % 60
+const duration = (duration?: Milliseconds): string => {
+    if (!duration) return ""
+    
+    const days = Math.floor(duration / 86400000)
+    const hours = Math.floor(duration / 3600000) % 24
+    const minutes = Math.floor(duration / 60000) % 60
+    const seconds = Math.floor(duration / 1000) % 60
 
     const results = []
     if (days) results.push(`${days} Hari`)

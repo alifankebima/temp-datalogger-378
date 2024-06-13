@@ -34,7 +34,7 @@ interface MainWindowElectronAPI {
 
 interface SettingWindowElectronAPI {
     getConfig: () => Promise<StoreSchema["config"]>;
-    setConfig: (newData: StoreSchema["config"]) => void;
+    setConfig: (newData: StoreSchema["config"] | object) => void;
     manageSettingWindow: (manageWindow: ManageWindow) => void;
 }
 
@@ -43,7 +43,8 @@ interface PrintPreviewWindowElectronAPI {
 
     getGraphData: (recordingSessionID: number, interval: Seconds) => Promise<GraphData[]>,
 
-    getState: () => Promise<StoreSchema["state"]>;    
+    getState: () => Promise<StoreSchema["state"]>;
+    getConfig: () => Promise<StoreSchema["config"]>;
     getPrintPreviewConfig: () => Promise<StoreSchema["printPreview"]>;
     setPrintPreviewConfig: (newData: StoreSchema["printPreview"]) => void;
 

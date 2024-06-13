@@ -1,4 +1,5 @@
 import { DropdownItem } from "./sampleInterval";
+import { Minutes } from "./unit";
 
 interface StoreSchema {
     config: {
@@ -11,7 +12,8 @@ interface StoreSchema {
         t3monitor: boolean;
         t4monitor: boolean;
         stopRecordAutomatically: boolean;
-        targetTemp: number
+        targetTemp: number;
+        keepRecordDuration: Minutes;
     },
     state: {
         isRecording: boolean,

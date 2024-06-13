@@ -48,6 +48,10 @@ const store = new Store<StoreSchema>({
                 targetTemp: {
                     type: 'number',
                     default: 65
+                },
+                keepRecordDuration: {
+                    type: 'number',
+                    default: 30
                 }
             },
             default: {}

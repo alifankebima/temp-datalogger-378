@@ -1,3 +1,5 @@
+import { Milliseconds } from "../types/unit"
+
 const parseTemp = (firstByte?: number, secondByte?: number): number | undefined => {
     if (firstByte === undefined || secondByte === undefined) return
     return parseInt(firstByte.toString(16).padStart(2, '0') + secondByte.toString(16).padStart(2, '0'), 16) / 10
@@ -26,7 +28,7 @@ const calcMax = (firstNumber?: number, secondNumber?: number): number | undefine
     return Math.max(firstNumber, secondNumber);
 }
 
-const isPastMidnight = (startTimestamp?: number, endTimestamp?: number): boolean => {
+const isPastMidnight = (startTimestamp?: Milliseconds, endTimestamp?: Milliseconds): boolean => {
     if (startTimestamp === undefined || endTimestamp === undefined) return false
     const startDate = new Date(startTimestamp)
     const endDate = new Date(endTimestamp)

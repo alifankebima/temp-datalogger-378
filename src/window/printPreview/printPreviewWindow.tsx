@@ -3,9 +3,9 @@ import { PrintPreviewWindowElectronAPI } from "../../types/renderer";
 import SimpleButton from "../../components/SimpleButton";
 import Dropdown from "../../components/Dropdown";
 import { GraphData } from "../../types/tempData";
-import logoGrayscale from "../../assets/img/logoGrayscale.png";
 import { DropdownItem } from "../../types/sampleInterval";
 import format from "../../helper/format";
+import { StoreSchema } from "../../types/electronStore";
 
 declare global {
   interface Window {
@@ -26,6 +26,7 @@ const printPreviewWindow = () => {
   });
   const [entryTimestamp, setEntryTimestamp] = useState(0);
   const [exitTimestamp, setExitTimestamp] = useState(0);
+  const [config, setConfig] = useState<Partial<StoreSchema["config"]>>({});
 
   useEffect(() => {
     (async () => {
@@ -34,11 +35,13 @@ const printPreviewWindow = () => {
 
       setSampleInterval(printPreviewConfig.sampleInterval ?? sampleInterval);
     })();
+    (async ()=> setConfig(await window.electronAPIPrintPreview.getConfig()))()
   }, []);
 
   useEffect(() => {
     (async () => {
       const state = await window.electronAPIPrintPreview.getState()
+
       const result = await window.electronAPIPrintPreview.getGraphData(
         state.recordingSessionID,
         sampleInterval.value
@@ -103,10 +106,6 @@ const printPreviewWindow = () => {
         <div className="flex justify-between">
           <div className="flex gap-2 items-center">
             <div className="">
-              <img
-                src={logoGrayscale}
-                style={{ width: 40, height: 50, minWidth: 40 }}
-              />
             </div>
             <div
               className="font-bold"
@@ -114,7 +113,7 @@ const printPreviewWindow = () => {
                 fontFamily: "Liberation Serif, serif",
               }}
             >
-              PT. SUMBER REZEKI PALLETINDO
+              {config?.title}
             </div>
           </div>
           <div className="flex gap-2 items-center">

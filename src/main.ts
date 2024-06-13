@@ -144,7 +144,6 @@ const initSerialDevice = async (isMockPort: boolean): Promise<void> => {
     mainWindow?.webContents.send('main-window:update-temp-display', defaultTemps)
     mainWindow?.webContents.send('main-window:stop-record-callback')
     store.set('state.isRecording', false)
-    store.set('state.recordingSessionID', 0)
     initSerialDevice(isMockPort)
   });
 
@@ -189,14 +188,35 @@ app.on('ready', () => {
 // -------------------- Ipc communications --------------------
 ipcMain.handle('electron-store:get', (_event, key: string) => store.get(key))
 ipcMain.on('electron-store:set', (_event, { key, value }) => store.set(key, value))
+
 store.onDidChange('devicePath', (newValue) => {
   mainWindow?.webContents.send('main-window:update-status-bar', {
     devicePath: newValue
   })
 })
 
-store.onDidChange('config', (newValue) =>{
-  mainWindow?.webContents.send('main-window:update-config', newValue)
+store.onDidChange('config', (newValue, oldValue) => {
+  if (!newValue || !oldValue) return
+  const updatedConfig: Array<keyof StoreSchema['config']> = []
+  const watchedConfig: Array<keyof StoreSchema['config']> = [
+    'title',
+    'subtitle',
+    'minGraphTemp',
+    'maxGraphTemp',
+    't1monitor',
+    't2monitor',
+    't3monitor',
+    't4monitor'
+  ]
+
+  const allKeys = new Set([...Object.keys(newValue!), ...Object.keys(oldValue!)]) as Set<keyof StoreSchema['config']>
+
+  allKeys.forEach(key => {
+    if (newValue[key] !== oldValue[key]) updatedConfig.push(key)
+  })
+
+  if (updatedConfig.find(key => watchedConfig.includes(key)))
+    mainWindow?.webContents.send('main-window:update-config', newValue)
 })
 
 ipcMain.on("main-window:start-record", async (event, isDataExists: boolean) => {
@@ -355,7 +375,7 @@ ipcMain.on('main-process:save-file', async (event, args: SaveFileArgs) => {
 
     const { startTimestamp, endTimestamp, prefferedType, image } = args
     const validFileExtensions = [".pdf", ".xlsx", ".png"]
-    
+
     let defaultFileName = "KLIN DRY"
     if (startTimestamp) defaultFileName += " " + format.fileDate(startTimestamp, endTimestamp).toUpperCase()
     defaultFileName += prefferedType ? "." + prefferedType : ".pdf"

@@ -6,11 +6,9 @@ import Box from "@mui/material/Box";
 
 import CustomTabPanel from "../../components/CustomTabPanel";
 
-import {
-  SettingWindowElectronAPI
-} from "../../types/renderer";
+import { SettingWindowElectronAPI } from "../../types/renderer";
 import SimpleButton from "../../components/SimpleButton";
-import { FormControlLabel, Switch } from "@mui/material";
+import { FormControl, FormControlLabel, Switch } from "@mui/material";
 import { StoreSchema } from "../../types/electronStore";
 
 declare global {
@@ -27,9 +25,10 @@ const SettingWindow = () => {
     minGraphTemp: 20,
     maxGraphTemp: 80,
     t1monitor: true,
-    t2monitor: true,
+    t2monitor: false,
     t3monitor: true,
     t4monitor: true,
+    keepRecordDuration: 30,
     stopRecordAutomatically: false,
     targetTemp: 65,
   });
@@ -120,36 +119,21 @@ const SettingWindow = () => {
         </CustomTabPanel>
         <CustomTabPanel value={value} index={1} className="grow">
           <div className="flex flex-col gap-4">
-            <div className="">
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium me-4"
-              >
-                T1
-              </label>
-              <div className="inline-flex items-center">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      name="t1monitor"
-                      checked={config.t1monitor}
-                      onChange={handleSwitch}
-                    />
-                  }
-                  label="Monitor"
-                />
-              </div>
+            <div className="text-sm font-medium">
+              Konfigurasi monitor sensor
+            </div>
+            <div className="flex">
+              <Switch
+                name="t1monitor"
+                checked={config.t1monitor}
+                onChange={handleSwitch}
+              />
+              <div className="">T1</div>
             </div>
 
             <div className="">
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium me-4"
-              >
-                T2
-              </label>
               <div className="inline-flex items-center">
-                <FormControlLabel
+                <FormControl
                   control={
                     <Switch
                       name="t2monitor"
@@ -157,17 +141,10 @@ const SettingWindow = () => {
                       onChange={handleSwitch}
                     />
                   }
-                  label="Monitor"
                 />
               </div>
             </div>
             <div className="">
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium me-4"
-              >
-                T3
-              </label>
               <div className="inline-flex items-center">
                 <FormControlLabel
                   control={
@@ -177,17 +154,11 @@ const SettingWindow = () => {
                       onChange={handleSwitch}
                     />
                   }
-                  label="Monitor"
+                  label="T3"
                 />
               </div>
             </div>
             <div className="">
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium me-4"
-              >
-                T4
-              </label>
               <div className="inline-flex items-center">
                 <FormControlLabel
                   control={
@@ -197,7 +168,7 @@ const SettingWindow = () => {
                       onChange={handleSwitch}
                     />
                   }
-                  label="Monitor"
+                  label="T4"
                 />
               </div>
             </div>
@@ -233,13 +204,13 @@ const SettingWindow = () => {
                   </div>
                   <div className="flex items-center ms-8 my-2">
                     <div className="text-nowrap text-sm mx-4">
-                      Tetap merekam setelah mencapai target selama
+                      Tetap merekam setelah mencapai target suhu selama
                     </div>
                     <input
                       type="number"
                       name="targetTemp"
                       onChange={handleInput}
-                      value={config.targetTemp}
+                      value={config.keepRecordDuration}
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-16 text-right p-2"
                     />
                     <div className="mx-2 text-sm">Menit</div>
